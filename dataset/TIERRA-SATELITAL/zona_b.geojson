@@ -1,0 +1,231 @@
+{
+  "type": "FeatureCollection",
+  "features": [
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [
+            -60.153011,
+            -32.632849
+          ],
+          [
+            -60.153491,
+            -32.632355
+          ]
+        ]
+      },
+      "properties": {}
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [
+            -60.152413,
+            -32.633443
+          ],
+          [
+            -60.152931,
+            -32.632922
+          ]
+        ]
+      },
+      "properties": {}
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [
+            -60.151815,
+            -32.634062
+          ],
+          [
+            -60.152362,
+            -32.633518
+          ]
+        ]
+      },
+      "properties": {}
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [
+            -60.151107,
+            -32.634772
+          ],
+          [
+            -60.151783,
+            -32.63409
+          ]
+        ]
+      },
+      "properties": {}
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [
+            -60.149969,
+            -32.632825
+          ],
+          [
+            -60.149312,
+            -32.633425
+          ]
+        ]
+      },
+      "properties": {}
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [
+            -60.150592,
+            -32.632221
+          ],
+          [
+            -60.150058,
+            -32.632741
+          ]
+        ]
+      },
+      "properties": {}
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [
+            -60.151203,
+            -32.631596
+          ],
+          [
+            -60.150653,
+            -32.632149
+          ]
+        ]
+      },
+      "properties": {}
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [
+            -60.151799,
+            -32.630995
+          ],
+          [
+            -60.15127,
+            -32.631519
+          ]
+        ]
+      },
+      "properties": {}
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [
+            -60.147859,
+            -32.625272
+          ],
+          [
+            -60.148529,
+            -32.624633
+          ]
+        ]
+      },
+      "properties": {}
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [
+            -60.147172,
+            -32.625937
+          ],
+          [
+            -60.147826,
+            -32.6253
+          ]
+        ]
+      },
+      "properties": {}
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [
+            -60.146515,
+            -32.626571
+          ],
+          [
+            -60.147141,
+            -32.625963
+          ]
+        ]
+      },
+      "properties": {}
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [
+            -60.145833,
+            -32.627236
+          ],
+          [
+            -60.146464,
+            -32.626617
+          ]
+        ]
+      },
+      "properties": {
+        "_umap_options": {
+          "color": "Orange",
+          "weight": 13
+        }
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [
+            -60.155438,
+            -32.630457
+          ],
+          [
+            -60.156294,
+            -32.629583
+          ]
+        ]
+      },
+      "properties": {}
+    }
+  ]
+}

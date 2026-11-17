@@ -1,0 +1,27 @@
+{
+  "type": "FeatureCollection",
+  "features": [
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [
+            -60.162313,
+            -32.612438
+          ],
+          [
+            -60.161583,
+            -32.611942
+          ]
+        ]
+      },
+      "properties": {
+        "_umap_options": {
+          "color": "Orange",
+          "weight": 13
+        }
+      }
+    }
+  ]
+}
