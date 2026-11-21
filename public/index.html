@@ -34,6 +34,8 @@
         <form id="buscador" class="buscador" role="search" autocomplete="off">
           <input id="busqueda" type="search" list="calles" placeholder="Calle y altura, p. ej. Laprida 450"
                  aria-label="Calle y altura" enterkeyhint="search">
+          <button type="button" class="btn btn-limpiar" data-accion="limpiar-busqueda"
+                  aria-label="Limpiar búsqueda" title="Limpiar búsqueda">×</button>
           <button type="submit" class="btn btn-primario" aria-label="Buscar">
             <svg viewBox="0 0 20 20" width="16" height="16" aria-hidden="true"><circle cx="9" cy="9" r="5.5" fill="none" stroke="currentColor" stroke-width="2"/><path d="M13.2 13.2L17 17" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
           </button>
@@ -53,7 +55,10 @@
               <span class="capa-detalle" data-largo="asfalto">—</span>
             </span>
             <span class="capa-conteo"><span data-conteo="asfalto">—</span><small data-unidad="asfalto">calles</small></span>
-            <span class="capa-detalle capa-fuentes" data-fuentes="asfalto"></span>
+            <details class="detalle-capa" data-detalle="asfalto">
+              <summary>Detalle del relevamiento</summary>
+              <span class="capa-detalle capa-fuentes" data-fuentes="asfalto"></span>
+            </details>
           </label>
 
           <label class="capa" data-capa="tierra">
@@ -64,7 +69,10 @@
               <span class="capa-detalle" data-largo="tierra">—</span>
             </span>
             <span class="capa-conteo"><span data-conteo="tierra">—</span><small data-unidad="tierra">calles</small></span>
-            <span class="capa-detalle capa-fuentes" data-fuentes="tierra"></span>
+            <details class="detalle-capa" data-detalle="tierra">
+              <summary>Detalle del relevamiento</summary>
+              <span class="capa-detalle capa-fuentes" data-fuentes="tierra"></span>
+            </details>
           </label>
         </div>
 
@@ -86,7 +94,10 @@
             <span class="capa-detalle" data-largo="sinclasificar">—</span>
           </span>
           <span class="capa-conteo"><span data-conteo="sinclasificar">—</span><small data-unidad="sinclasificar">calles</small></span>
-          <span class="capa-detalle capa-fuentes">Cuadras que existen en OpenStreetMap pero no se relevaron.</span>
+          <details class="detalle-capa" data-detalle="sinclasificar">
+            <summary>¿Qué significa?</summary>
+            <span class="capa-detalle capa-fuentes">Cuadras que existen en OpenStreetMap pero no se relevaron.</span>
+          </details>
         </label>
       </section>
 
@@ -117,8 +128,8 @@
 
       <footer class="pie">
         <div class="leyenda">
-          <span><svg viewBox="0 0 28 8" width="28" height="8" aria-hidden="true"><line x1="2" y1="4" x2="26" y2="4" stroke="currentColor" stroke-width="3" stroke-linecap="round"/></svg>Verificada</span>
-          <span><svg viewBox="0 0 28 8" width="28" height="8" aria-hidden="true"><line x1="1" y1="4" x2="27" y2="4" stroke="currentColor" stroke-width="3" stroke-dasharray="5 4"/></svg>Satelital</span>
+          <span title="Datos verificados en el relevamiento"><svg viewBox="0 0 28 8" width="28" height="8" aria-hidden="true"><line x1="2" y1="4" x2="26" y2="4" stroke="currentColor" stroke-width="3" stroke-linecap="round"/></svg>Continua: verificada</span>
+          <span title="Datos identificados con imágenes satelitales"><svg viewBox="0 0 28 8" width="28" height="8" aria-hidden="true"><line x1="1" y1="4" x2="27" y2="4" stroke="currentColor" stroke-width="3" stroke-dasharray="5 4"/></svg>Punteada: satelital</span>
         </div>
         <div class="opciones">
           <label class="mini-switch">
@@ -133,9 +144,27 @@
             <button type="button" data-accion="fondo" data-fondo="satelite" aria-pressed="false">Satélite</button>
           </div>
         </div>
+        <p class="actualizacion" id="actualizacion">Cargando fecha de los datos…</p>
       </footer>
     </div>
+    <div class="credito-colaborativo credito-fijo">
+      <div class="credito-texto">
+        <strong>Trabajo colaborativo</strong>
+        <span>Alumnos: Gabriel Benitez y Alexis Artaza</span>
+      </div>
+      <div class="credito-logos">
+        <img src="img/logo-gaspar-benavento.jpg"
+             alt="Instituto Superior Gaspar L. Benavento" width="40" height="40">
+        <img src="img/logo-eet1-victoria.png"
+             alt="Escuela de Educación Técnica N° 1 Victoria E. Ezequiel" width="40" height="40">
+      </div>
+    </div>
   </aside>
+
+  <button type="button" class="btn control-ver-todo" data-accion="ver-todo">
+    <svg viewBox="0 0 20 20" width="17" height="17" aria-hidden="true"><path d="M3 8V3h5M12 3h5v5M17 12v5h-5M8 17H3v-5" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+    Ver toda la ciudad
+  </button>
 
   <div class="toast" id="toast" role="status" aria-live="polite"></div>
 

@@ -218,6 +218,22 @@ h2 {
   margin-top: 6px;
 }
 
+.detalle-capa {
+  grid-column: 2 / -1;
+  margin-top: 6px;
+  font-size: 12px;
+  color: var(--tenue);
+}
+
+.detalle-capa summary {
+  width: fit-content;
+  cursor: pointer;
+  list-style-position: inside;
+}
+
+.detalle-capa summary:hover { color: var(--tinta); }
+.detalle-capa .capa-fuentes { margin-top: 4px; }
+
 .capa-conteo {
   text-align: right;
   font-size: 28px;
@@ -495,6 +511,7 @@ kbd {
 
 .leyenda {
   display: flex;
+  flex-wrap: wrap;
   gap: 14px;
 }
 
@@ -514,6 +531,59 @@ kbd {
   display: flex;
   align-items: center;
   gap: 8px;
+}
+
+.actualizacion {
+  margin: 0;
+  font-size: 11px;
+  line-height: 1.4;
+  color: var(--tenue);
+}
+
+.credito-colaborativo {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  width: 100%;
+  padding-top: 12px;
+  border-top: 1px solid var(--linea);
+}
+
+.credito-fijo {
+  flex: none;
+  padding: 10px 20px 12px;
+  background: var(--panel-bg);
+}
+
+.credito-texto {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  min-width: 0;
+  color: var(--tenue);
+  line-height: 1.35;
+}
+
+.credito-texto strong {
+  color: var(--tinta);
+  font-size: 12px;
+}
+
+.credito-logos {
+  display: flex;
+  align-items: center;
+  flex: none;
+  gap: 8px;
+}
+
+.credito-logos img {
+  display: block;
+  width: 40px;
+  height: 40px;
+  object-fit: contain;
+  border-radius: 50%;
+  background: #fff;
 }
 
 /* Etiqueta "Modo edición" (solo con ?editar en la URL) */
@@ -555,7 +625,28 @@ kbd {
 }
 
 .buscador .btn { min-width: 42px; padding: 0 12px; }
+.buscador input:placeholder-shown + .btn-limpiar { display: none; }
+.buscador .btn-limpiar {
+  min-width: 38px;
+  padding: 0;
+  font-size: 20px;
+  line-height: 1;
+}
 .resultado { margin-top: 10px; }
+
+.resultado .acciones {
+  margin-top: 12px;
+}
+
+.control-ver-todo {
+  position: fixed;
+  z-index: 900;
+  top: 94px;
+  right: 12px;
+  min-height: 38px;
+  box-shadow: var(--sombra);
+  background: var(--panel-bg);
+}
 
 /* Pin de la dirección encontrada */
 .pin-punto {
@@ -753,8 +844,8 @@ kbd {
     right: 8px;
     bottom: 8px;
     width: auto;
-    max-height: 58vh;
-    max-height: 58dvh;
+    max-height: 50vh;
+    max-height: 50dvh;
     border-radius: 18px;
   }
 
@@ -766,6 +857,19 @@ kbd {
   .panel.plegado .panel-cabecera { border-bottom: 0; }
 
   .leaflet-bottom { bottom: var(--sheet-h); }
+
+  .btn { min-height: 44px; }
+  .buscador input { height: 44px; }
+  .control-ver-todo {
+    top: 12px;
+    left: 12px;
+    right: auto;
+  }
+  .credito-logos img {
+    width: 36px;
+    height: 36px;
+  }
+  .credito-fijo { padding: 8px 16px 10px; }
 
   .toast {
     left: 50%;

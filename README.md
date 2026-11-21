@@ -20,6 +20,7 @@ Es un sitio estático: no hay base de datos ni backend.
 
 Proyecto realizado con ayuda de inteligencia artificial.
 
+- **Trabajo colaborativo**: alumnos Gabriel Benitez y Alexis Artaza.
 - **Relevamiento de las calles** (asfalto y tierra): estudiantes de la Escuela de Educación Técnica N° 1
   "Dr. Pedro Radio" de Victoria.
 - **Montaje web**: estudiantes del Instituto de Educación Superior "Gaspar Benavento" de Victoria.
@@ -31,6 +32,7 @@ Proyecto realizado con ayuda de inteligencia artificial.
 - Muestra u oculta la capa de asfalto y la de tierra.
 - Cuenta las calles de cada capa (y también cuadras y kilómetros, con desglose verificada / satelital).
 - Buscador de calle y altura ("Laprida 450"): ubica la dirección y dice si la cuadra es de asfalto o de tierra.
+- Las búsquedas se pueden limpiar y compartir por URL; **Ver toda la ciudad** recupera el encuadre general.
 - En modo edición (`?editar` en la URL) se pueden seleccionar calles y pasarlas a la otra capa.
   Con `Shift` + clic, o con el interruptor **Varias**, se seleccionan varias a la vez; **Toda la calle**
   selecciona todas las cuadras de esa calle.
@@ -38,6 +40,7 @@ Proyecto realizado con ayuda de inteligencia artificial.
   (**Sin clasificar**); en modo edición se pueden pintar como asfalto o tierra.
 - Escribe el nombre de cada calle sobre la calle pintada.
 - Fondo gris, a color o satelital.
+- Panel resumido con detalles técnicos desplegables y fecha visible de actualización de los datos.
 - Deshacer (`Ctrl` + `Z`), restablecer y descargar `asfalto.geojson` / `tierra.geojson` con los cambios.
 
 Los cambios se guardan en el navegador de cada visitante (`localStorage`). Para que pasen a ser
@@ -53,6 +56,7 @@ y volver a publicar.
 - [`.github/copilot-instructions.md`](.github/copilot-instructions.md): arquitectura, modelo de datos, convenciones y
   precauciones. GitHub Copilot lo carga solo; Claude Code lo lee a través de `CLAUDE.md`.
 - [`docs/sesion-2026-11-16.md`](docs/sesion-2026-11-16.md): cómo se armó la primera versión, decisiones y pendientes.
+- [`docs/sesion-2026-11-20.md`](docs/sesion-2026-11-20.md): mejoras de claridad, búsqueda, compartir y móvil.
 
 ## Estructura
 
@@ -84,6 +88,9 @@ npm run sin-clasificar # recalcula las cuadras sin clasificar (no pisa cambios)
 npm run osm            # vuelve a bajar las calles de OpenStreetMap (necesita internet)
 npm run data           # regenera todo public/data/ desde dataset/ (solo si cambió dataset/)
 ```
+
+En Windows, `iniciar-mapa.bat` permite abrir el mapa con doble clic: abre el navegador y
+deja corriendo el servidor local. La ventana debe permanecer abierta; `Ctrl` + `C` lo detiene.
 
 ## Publicar en Vercel
 

@@ -311,6 +311,20 @@ try {
   ok("fondo a color", (await ev(`capaFondo._url`)).includes("World_Street_Map"));
   await sleep(1500);
   await captura("06d-color.png");
+  await ev(`document.querySelector('[data-accion=ver-todo]').click()`);
+  await sleep(800);
+  ok("volver a toda la ciudad conserva la vista general", (await ev(`map.getZoom()`)) === 15);
+  await ev(`(() => {
+    document.querySelector('[data-accion=limpiar-busqueda]').click();
+    document.querySelector('#busqueda').value = 'Laprida 450';
+    document.querySelector('#buscador').requestSubmit();
+  })()`);
+  await esperar(`!document.querySelector('#resultado').hidden`, 8000);
+  ok("compartir y limpiar están disponibles en el resultado", await ev(`(() => {
+    const r = document.querySelector('#resultado');
+    return r.textContent.includes('Compartir') && Boolean(document.querySelector('[data-accion=limpiar-busqueda]'));
+  })()`));
+  ok("la búsqueda queda representada en la URL", (await ev(`new URL(location.href).searchParams.get('q')`)) === "Laprida 450");
 
   // ---------- Fondo satelital ----------
   await ev(`document.querySelector('[data-fondo=satelite]').click()`);
@@ -339,6 +353,17 @@ try {
   await sleep(2000);
   await captura("08-movil.png");
   ok("sin scroll horizontal en móvil", await ev(`document.documentElement.scrollWidth <= innerWidth`));
+  ok("el panel ocupa como máximo la mitad del alto móvil", await ev(`document.querySelector('#panel').getBoundingClientRect().height <= innerHeight * 0.51`));
+  ok("el pie muestra el trabajo colaborativo y ambos alumnos", await ev(`(() => {
+    const texto = document.querySelector('.credito-colaborativo')?.textContent ?? '';
+    return texto.includes('Trabajo colaborativo') && texto.includes('Gabriel Benitez') && texto.includes('Alexis Artaza')
+      && document.querySelectorAll('.credito-logos img').length === 2;
+  })()`));
+  ok("los créditos quedan siempre visibles fuera del scroll", await ev(`(() => {
+    const credito = document.querySelector('.credito-colaborativo').getBoundingClientRect();
+    return !document.querySelector('.panel-cuerpo').contains(document.querySelector('.credito-colaborativo'))
+      && credito.top >= 0 && credito.bottom <= innerHeight;
+  })()`));
 
   ok("consola sin errores", consola.length === 0, consola.join(" | "));
 } catch (error) {

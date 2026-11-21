@@ -15,7 +15,8 @@ Mapa web que muestra las calles de **asfalto** y de **tierra** de Victoria (Entr
 sobre Leaflet. Funciona como expositor: sitio estático publicado en Vercel, **sin base de datos**.
 
 - Producción: https://victoriamap.vercel.app
-- Historia y decisiones del proyecto: [docs/sesion-2026-11-16.md](../docs/sesion-2026-11-16.md)
+- Historia y decisiones del proyecto: [docs/sesion-2026-11-16.md](../docs/sesion-2026-11-16.md) y
+  [docs/sesion-2026-11-20.md](../docs/sesion-2026-11-20.md)
 
 ## Si sos un agente de IA (leé esto primero)
 
@@ -45,8 +46,9 @@ sobre Leaflet. Funciona como expositor: sitio estático publicado en Vercel, **s
    son tramos normales de esa capa, no un dibujo aparte.
 6. **Nombres de calles** escritos sobre la calle pintada (desde zoom 15), con un interruptor para ocultarlos.
 7. **Buscador** de calle y altura ("Laprida 450"): ubica la dirección con un pin, resalta la cuadra y dice si es de
-   asfalto o de tierra. Con solo el nombre resalta la calle entera. La numeración **no se dibuja en el mapa**
-   (pedido explícito): solo la usa el buscador.
+   asfalto o de tierra. Con solo el nombre resalta la calle entera. La búsqueda se puede limpiar, compartir mediante
+   URL y cargar con `?q=...`; el control **Ver toda la ciudad** vuelve al encuadre general. La numeración
+   **no se dibuja en el mapa** (pedido explícito): solo la usa el buscador.
 8. Fondo **Gris | Color | Satélite**, debajo del interruptor de nombres.
 9. **Zoom entre 15 y 18** (escala de 300 m a 50 m) y el mapa **no se puede llevar a más de 5 km** del área de los datos.
 
@@ -144,6 +146,8 @@ En la interfaz se habla de **calles** y **cuadras**, nunca de "tramos" ni de ids
 - **Todo cambio de capa pasa por `asignarCapa()`**. `mover()` además apila en `estado.historial`,
   guarda y vuelve a pintar el panel. "Pintar" es `mover()` desde `SIN`. No mover capas de Leaflet por fuera.
 - El panel se redibuja con `render()` (`renderCapas`, `renderSeleccion`, `renderCambios`, `actualizarEtiquetas`).
+  Los datos técnicos de fuente van plegados en `<details>` para priorizar calles, kilómetros y porcentajes;
+  la fecha pública se toma de `ACTUALIZACION_DATOS` y debe mantenerse junto con los datos publicados.
   Los botones usan `data-accion` y un único listener delegado en `conectarUI()`.
 - `localStorage`:
   - `victoriamap:cambios:v1` → `{ "<id>": "asfalto" | "tierra" }`, solo los tramos que difieren de los datos publicados.

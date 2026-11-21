@@ -28,6 +28,7 @@ const ZOOM_MIN = 15;         // escala ~300 m: no se puede alejar más
 const ZOOM_ETIQUETAS = 15;   // desde este zoom se escriben los nombres de las calles
 const LIMITE_M = 5000;       // no se puede desplazar el mapa más de 5 km fuera del área de los datos
 const ZOOM_MAX = 18;         // escala ~50 m: más cerca, el satélite de Esri muestra "Map data not yet available"
+const ACTUALIZACION_DATOS = '16 de noviembre de 2026';
 
 const PALETAS = {
   mapa: { asfalto: '#3b5bdb', tierra: '#e8590c', sinclasificar: '#495057', sel: '#d6336c' },
@@ -65,6 +66,7 @@ const estado = {
   multiple: false,
   nombres: true,
   fondo: 'mapa',
+  busqueda: '',
 };
 
 /* ---------- Utilidades ---------- */
@@ -332,7 +334,8 @@ function actualizarEtiquetas() {
     const en = (k) => L.point(a.x + ux * k, a.y + uy * k);
 
     // Posiciones fijas a lo largo de la calle (no saltan al desplazar el mapa).
-    const paso = ancho * 2 + 200;
+    const separacionMinima = z >= 17 ? 2.2 : 3.2;
+    const paso = ancho * separacionMinima + 200;
     const n = Math.max(1, Math.floor(largo / paso));
     let alguna = false;
     for (let i = 0; i < n; i++) {
@@ -357,7 +360,8 @@ function actualizarEtiquetas() {
     const p1 = [centro[0] - (c.ux * c.ancho) / 2, centro[1] - (c.uy * c.ancho) / 2];
     const p2 = [centro[0] + (c.ux * c.ancho) / 2, centro[1] + (c.uy * c.ancho) / 2];
     const choca = puestas.some((o) => distSegmentos(p1, p2, o.p1, o.p2) < alto
-      || (o.nombre === c.nombre && Math.hypot(o.centro[0] - centro[0], o.centro[1] - centro[1]) < c.ancho * 2));
+      || (o.nombre === c.nombre
+        && Math.hypot(o.centro[0] - centro[0], o.centro[1] - centro[1]) < c.ancho * (z >= 17 ? 2.5 : 3.5)));
     if (choca) continue;
     puestas.push({ p1, p2, centro, nombre: c.nombre });
 
@@ -488,10 +492,17 @@ function cuadraMasCercana(calle, latlng) {
   return mejor?.t ?? null;
 }
 
-function limpiarBusqueda() {
+function limpiarBusqueda(reiniciar = true) {
   resaltado.clearLayers();
   $('#resultado').innerHTML = '';
   $('#resultado').hidden = true;
+  if (reiniciar) {
+    estado.busqueda = '';
+    $('#busqueda').value = '';
+    const url = new URL(window.location.href);
+    url.searchParams.delete('q');
+    history.replaceState(null, '', url);
+  }
 }
 
 function resaltarCalle(cuadras) {
@@ -513,10 +524,21 @@ function mostrarResultado(html) {
   $('#resultado').hidden = false;
 }
 
+function accionesBusqueda() {
+  return `<div class="acciones">
+    <button type="button" class="btn" data-accion="compartir-busqueda">Compartir</button>
+    <button type="button" class="btn" data-accion="ver-todo">Ver toda la ciudad</button>
+  </div>`;
+}
+
 async function buscar(texto) {
-  limpiarBusqueda();
+  limpiarBusqueda(false);
+  estado.busqueda = texto.trim();
   const { texto: textoCalle, numero } = interpretarBusqueda(texto);
   if (!textoCalle) return;
+  const url = new URL(window.location.href);
+  url.searchParams.set('q', estado.busqueda);
+  history.replaceState(null, '', url);
   const calle = encontrarCalle(textoCalle);
   if (!calle) {
     mostrarResultado(`<p class="vacio">No encontramos una calle "${esc(textoCalle)}" en Victoria.</p>`);
@@ -531,7 +553,8 @@ async function buscar(texto) {
     const porCapa = TODAS.map((c) => [c, cuadras.filter((t) => t.capa === c)]).filter(([, l]) => l.length);
     mostrarResultado(`<div class="sel-cabecera"><strong>${esc(calle)}</strong></div>
       <p class="sel-resumen">${porCapa.map(([c, l]) => chip(c, l.length)).join('')}
-        <span>${plural(cuadras.length, 'cuadra', 'cuadras')} · ${fmtLargo(cuadras.reduce((s, t) => s + t.largo, 0))}</span></p>`);
+        <span>${plural(cuadras.length, 'cuadra', 'cuadras')} · ${fmtLargo(cuadras.reduce((s, t) => s + t.largo, 0))}</span></p>
+      ${accionesBusqueda()}`);
     return;
   }
 
@@ -542,7 +565,8 @@ async function buscar(texto) {
     resaltarCalle(cuadras);
     encuadrar(cuadras, { maxZoom: 17 });
     mostrarResultado(`<div class="sel-cabecera"><strong>${esc(calle)}</strong></div>
-      <p class="nota">No hay numeración cargada para esta calle; se muestra la calle entera.</p>`);
+      <p class="nota">No hay numeración cargada para esta calle; se muestra la calle entera.</p>
+      ${accionesBusqueda()}`);
     return;
   }
   const cuadra = cuadraMasCercana(calle, ubicacion.latlng);
@@ -557,7 +581,8 @@ async function buscar(texto) {
   mostrarResultado(`<div class="sel-cabecera"><strong>${esc(calle)} ${fmtEntero.format(numero)}</strong>
       ${cuadra ? chip(cuadra.capa) : ''}</div>
     ${cuadra ? `<p class="nota">${cuadra.capa === SIN ? 'Esta cuadra no fue relevada.' : `Cuadra de ${NOMBRE[cuadra.capa].toLowerCase()}`}${cuadra.props.fuente === 'satelital' ? ' (según imagen satelital)' : ''}.</p>` : ''}
-    ${ubicacion.aproximado ? `<p class="nota">No hay numeración cargada para el ${fmtEntero.format(numero)}; se muestra la más cercana (${fmtEntero.format(ubicacion.numeroCercano)}).</p>` : ''}`);
+    ${ubicacion.aproximado ? `<p class="nota">No hay numeración cargada para el ${fmtEntero.format(numero)}; se muestra la más cercana (${fmtEntero.format(ubicacion.numeroCercano)}).</p>` : ''}
+    ${accionesBusqueda()}`);
 }
 
 function prepararBuscador() {
@@ -569,6 +594,30 @@ function prepararBuscador() {
   $('#busqueda').addEventListener('input', (e) => {
     if (!e.target.value.trim()) limpiarBusqueda();
   });
+}
+
+async function compartirBusqueda() {
+  if (!estado.busqueda) {
+    toast('Hacé una búsqueda antes de compartirla.');
+    return;
+  }
+  const url = new URL(window.location.href);
+  url.searchParams.delete('editar');
+  url.searchParams.set('q', estado.busqueda);
+  try {
+    if (navigator.share) {
+      await navigator.share({ title: 'Calles de Victoria', text: estado.busqueda, url: url.href });
+    } else {
+      await navigator.clipboard.writeText(url.href);
+      toast('Enlace copiado al portapapeles.');
+    }
+  } catch (error) {
+    if (error.name !== 'AbortError') toast('No se pudo compartir el enlace. Podés copiarlo desde la barra de direcciones.');
+  }
+}
+
+function verTodaLaCiudad() {
+  encuadrar([...estado.tramos.values()].filter((t) => t.capa !== SIN), { maxZoom: ZOOM_MIN });
 }
 
 function relleno() {
@@ -998,6 +1047,9 @@ function conectarUI() {
     else if (accion === 'ver-cambios') verCambios();
     else if (accion === 'descargar') descargar(capa);
     else if (accion === 'panel') plegarPanel();
+    else if (accion === 'limpiar-busqueda') limpiarBusqueda();
+    else if (accion === 'compartir-busqueda') compartirBusqueda();
+    else if (accion === 'ver-todo') verTodaLaCiudad();
     else if (accion === 'fondo') {
       aplicarFondo(fondo);
       actualizarEtiquetas();
@@ -1014,7 +1066,10 @@ function conectarUI() {
   $('#nombres').addEventListener('change', (e) => setNombres(e.target.checked));
 
   document.addEventListener('keydown', (e) => {
-    if (e.key === 'Escape') limpiarSeleccion();
+    if (e.key === 'Escape') {
+      limpiarSeleccion();
+      limpiarBusqueda();
+    }
     else if (EDICION && (e.ctrlKey || e.metaKey) && !e.shiftKey && e.key.toLowerCase() === 'z') {
       e.preventDefault();
       deshacer();
@@ -1067,7 +1122,14 @@ async function iniciar() {
   }
   limitarArea();
   prepararBuscador();
-  encuadrar([...estado.tramos.values()].filter((t) => t.capa !== SIN));
+  $('#actualizacion').textContent = `Datos publicados: ${ACTUALIZACION_DATOS}.`;
+  const consulta = new URLSearchParams(window.location.search).get('q');
+  if (consulta) {
+    $('#busqueda').value = consulta;
+    await buscar(consulta);
+  } else {
+    verTodaLaCiudad();
+  }
   render();
 }
 
