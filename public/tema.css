@@ -1,0 +1,103 @@
+/* Botones redondos y menús flotantes compartidos (portada y mapa). El selector de tema es un botón redondo
+   con el ícono de la opción elegida; al tocarlo se despliegan Automático / Claro / Oscuro. En el mapa, el fondo
+   usa el mismo menú y "Ver toda la ciudad" el mismo botón redondo. Lo maneja tema.js.
+   Usa las variables de color de cada página con valores de respaldo. */
+
+.menu-flotante {
+  position: fixed;
+  z-index: 1001;
+}
+
+.tema-menu {
+  top: 16px;
+  left: 16px;
+}
+
+.tema-menu .menu-opciones { left: 0; right: auto; transform-origin: top left; }
+
+.menu-boton,
+.boton-redondo {
+  display: grid;
+  place-items: center;
+  width: 42px;
+  height: 42px;
+  padding: 0;
+  font-size: 18px;
+  color: var(--tinta, #172033);
+  background: var(--superficie, var(--panel-bg, #fff));
+  border: 1px solid var(--linea, #e3e7ee);
+  border-radius: 50%;
+  box-shadow: var(--sombra, 0 6px 18px rgba(0, 0, 0, 0.15));
+  cursor: pointer;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.menu-boton:hover, .boton-redondo:hover { transform: scale(1.06); }
+.menu-boton:active, .boton-redondo:active { transform: scale(0.96); }
+.menu-boton:focus-visible, .boton-redondo:focus-visible { outline: 2px solid var(--c-asfalto, #3b5bdb); outline-offset: 2px; }
+.menu-boton .bi, .boton-redondo .bi { line-height: 1; transition: transform 0.35s ease; }
+.menu-flotante.abierto .menu-boton .bi { transform: rotate(-30deg); }
+
+.menu-opciones {
+  position: absolute;
+  top: calc(100% + 8px);
+  right: 0;
+  display: grid;
+  gap: 2px;
+  min-width: 170px;
+  padding: 6px;
+  background: var(--superficie, var(--panel-bg, #fff));
+  border: 1px solid var(--linea, #e3e7ee);
+  border-radius: 14px;
+  box-shadow: var(--sombra, 0 10px 30px rgba(0, 0, 0, 0.18));
+  transform-origin: top right;
+  animation: tema-abrir 0.18s cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+
+.menu-opciones[hidden] { display: none; }
+
+.menu-opciones button {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  min-height: 40px;
+  padding: 8px 12px;
+  font: inherit;
+  font-size: 14px;
+  font-weight: 600;
+  text-align: left;
+  color: var(--tinta, #172033);
+  background: transparent;
+  border: 0;
+  border-radius: 10px;
+  cursor: pointer;
+  transition: background-color 0.15s ease;
+}
+
+.menu-opciones button:hover { background: var(--hover, var(--linea, #eef0f4)); }
+.menu-opciones button:focus-visible { outline: 2px solid var(--c-asfalto, #3b5bdb); outline-offset: -2px; }
+.menu-opciones button .bi { font-size: 16px; width: 18px; text-align: center; }
+
+.menu-opciones button[aria-checked="true"] {
+  color: var(--primario-tinta, #fff);
+  background: var(--primario, #172033);
+}
+
+.visualmente-oculto {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+}
+
+@keyframes tema-abrir {
+  from { opacity: 0; transform: scale(0.92) translateY(-4px); }
+  to { opacity: 1; transform: none; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .menu-boton, .boton-redondo, .menu-boton .bi, .menu-opciones { transition: none; animation: none; }
+}

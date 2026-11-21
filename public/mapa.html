@@ -1,0 +1,179 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>Mapa · Calles de Victoria</title>
+  <meta name="description" content="Mapa interactivo de las calles de asfalto y de tierra de Victoria, Entre Ríos.">
+  <meta name="theme-color" content="#172033">
+  <link rel="icon" href="favicon.svg" type="image/svg+xml">
+  <script src="tema.js"></script>
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+        integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css"
+        integrity="sha384-XGjxtQfXaH2tnPFa9x+ruJTuLE3Aa6LhHSWRr1XeTyhezb4abCG4ccI5AkVDxqC+" crossorigin="anonymous">
+  <!-- IBM Plex Sans y Mono: tipografía del panel de compu (≥ 1024 px) -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@500;600&family=IBM+Plex+Sans:wght@400;500;600;700&display=swap">
+  <link rel="stylesheet" href="tema.css">
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <div id="map" aria-label="Mapa de calles de Victoria"></div>
+
+  <div class="menu-flotante tema-menu">
+    <button type="button" class="menu-boton tema-boton" aria-haspopup="menu" aria-expanded="false" aria-controls="tema-opciones"
+            aria-label="Tema: automático. Cambiar" title="Tema: automático"><i class="bi bi-circle-half" aria-hidden="true"></i></button>
+    <div class="menu-opciones tema-opciones" id="tema-opciones" role="menu" aria-label="Tema de colores" hidden>
+      <button type="button" role="menuitemradio" aria-checked="true" data-tema-opcion="auto"><i class="bi bi-circle-half" aria-hidden="true"></i> Automático</button>
+      <button type="button" role="menuitemradio" aria-checked="false" data-tema-opcion="claro"><i class="bi bi-sun" aria-hidden="true"></i> Claro</button>
+      <button type="button" role="menuitemradio" aria-checked="false" data-tema-opcion="oscuro"><i class="bi bi-moon-stars" aria-hidden="true"></i> Oscuro</button>
+    </div>
+  </div>
+
+  <div class="menu-flotante fondo-menu">
+    <button type="button" class="menu-boton" aria-haspopup="menu" aria-expanded="false" aria-controls="fondo-opciones"
+            aria-label="Mapa de fondo" title="Mapa de fondo"><i class="bi bi-map" aria-hidden="true"></i></button>
+    <div class="menu-opciones" id="fondo-opciones" role="menu" aria-label="Mapa de fondo" hidden>
+      <button type="button" role="menuitemradio" aria-checked="true" data-accion="fondo" data-fondo="mapa"><i class="bi bi-map" aria-hidden="true"></i> Gris</button>
+      <button type="button" role="menuitemradio" aria-checked="false" data-accion="fondo" data-fondo="color"><i class="bi bi-palette" aria-hidden="true"></i> Color</button>
+      <button type="button" role="menuitemradio" aria-checked="false" data-accion="fondo" data-fondo="satelite"><i class="bi bi-globe-americas" aria-hidden="true"></i> Satélite</button>
+    </div>
+  </div>
+
+  <!-- Degradé del color del mapa detrás del panel (celular y compu ≥ 1024 px), para que el mapa no compita con el panel -->
+  <div class="degradado-panel" aria-hidden="true"></div>
+
+  <aside class="panel" id="panel">
+    <!-- Chips de capas: siempre visibles, con el panel abierto o cerrado. Cada uno prende o apaga su capa. -->
+    <div class="chips" role="group" aria-label="Capas del mapa">
+      <button type="button" class="chip-capa" data-chip="asfalto" aria-pressed="true" title="Mostrar u ocultar las calles de asfalto">
+        <span class="chip-punto" aria-hidden="true"></span>Asfalto <span class="chip-num" data-conteo="asfalto">—</span>
+      </button>
+      <button type="button" class="chip-capa" data-chip="tierra" aria-pressed="true" title="Mostrar u ocultar las calles de tierra">
+        <span class="chip-punto" aria-hidden="true"></span>Tierra <span class="chip-num" data-conteo="tierra">—</span>
+      </button>
+      <button type="button" class="chip-capa chip-verificadas" id="solo-verificadas" data-verificadas aria-pressed="false"
+              title="Mostrar solo las cuadras verificadas (oculta las relevadas con imágenes satelitales)">
+        <i class="bi bi-circle" aria-hidden="true"></i> Verificadas
+      </button>
+    </div>
+
+    <div class="tarjeta-panel">
+      <header class="panel-cabecera">
+        <div class="titulo-panel">
+          <h1>Calles de Victoria</h1>
+          <!-- Compu (≥ 1024 px): en lugar del subtítulo con la leyenda (que pasa al pie) -->
+          <p class="subtitulo-escritorio"><span data-total-calles>—</span> calles<span class="marca-edicion">Modo edición</span></p>
+          <p class="subtitulo"><span class="sub-asfalto">Asfalto</span> y <span class="sub-tierra">tierra</span> ·
+            <span class="leyenda">
+              <span title="Datos verificados en el relevamiento"><svg viewBox="0 0 16 4" width="16" height="4" aria-hidden="true"><line x1="0" y1="2" x2="16" y2="2" stroke="currentColor" stroke-width="2"/></svg>verificada</span>
+              <span title="Datos identificados con imágenes satelitales"><svg viewBox="0 0 16 4" width="16" height="4" aria-hidden="true"><line x1="0" y1="2" x2="16" y2="2" stroke="currentColor" stroke-width="2" stroke-dasharray="3 2"/></svg>satelital</span>
+            </span>
+            <span class="marca-edicion">Modo edición</span></p>
+        </div>
+        <button type="button" class="panel-plegar" data-accion="panel"
+                aria-expanded="false" aria-controls="panel-cuerpo" aria-label="Abrir búsqueda" title="Abrir búsqueda">
+          <i class="bi bi-chevron-up" aria-hidden="true"></i>
+        </button>
+      </header>
+
+      <div id="alerta" class="alerta" role="alert" hidden></div>
+
+      <!-- Búsqueda: solo con el panel abierto (el botón ⌃/⌄ la abre y la cierra) -->
+      <div class="expandible" id="panel-cuerpo">
+        <div class="expandible-interior">
+          <form id="buscador" class="buscador" role="search" autocomplete="off">
+            <button type="submit" class="buscador-lupa" aria-label="Buscar"><i class="bi bi-search" aria-hidden="true"></i></button>
+            <input id="busqueda" type="search" list="calles" placeholder="Calle y altura, ej. Laprida 450"
+                   aria-label="Calle y altura" enterkeyhint="search">
+            <button type="button" class="btn-limpiar" data-accion="limpiar-busqueda"
+                    aria-label="Limpiar búsqueda" title="Limpiar búsqueda"><i class="bi bi-x-lg" aria-hidden="true"></i></button>
+            <datalist id="calles"></datalist>
+          </form>
+          <div id="resultado" class="tarjeta resultado" aria-live="polite" hidden></div>
+          <p class="creditos-mapa" id="creditos-mapa"></p>
+        </div>
+      </div>
+
+      <!-- Gráfico: siempre visible (también con el panel cerrado) -->
+      <div class="grafico">
+        <!-- Barra por longitud. En compu (≥ 1024 px) es grande y cada parte es un botón que prende o apaga su capa -->
+        <div class="proporcion" role="group" aria-label="Capas del mapa, proporción por longitud">
+          <button type="button" class="barra-capa" data-barra="asfalto" aria-pressed="true" title="Mostrar u ocultar las calles de asfalto">
+            <span class="barra-etiqueta">Asfalto · <span data-conteo-barra="asfalto">—</span> calles</span>
+            <span class="barra-pct" data-pct-barra="asfalto"></span>
+          </button>
+          <button type="button" class="barra-capa" data-barra="tierra" aria-pressed="true" title="Mostrar u ocultar las calles de tierra">
+            <span class="barra-etiqueta">Tierra</span>
+            <span class="barra-pct" data-pct-barra="tierra"></span>
+          </button>
+        </div>
+        <div class="proporcion-leyenda">
+          <span data-pct="asfalto"></span>
+          <span data-pct="tierra"></span>
+        </div>
+        <div class="pie-datos">
+          <span class="actualizacion" id="actualizacion" title="Fecha de publicación de los datos">—</span>
+        </div>
+      </div>
+
+      <!-- Compu (≥ 1024 px): interruptor de verificadas dentro del panel (los chips se ocultan) -->
+      <button type="button" class="verificadas-escritorio" data-verificadas aria-pressed="false"
+              title="Mostrar solo las cuadras verificadas (oculta las relevadas con imágenes satelitales)">
+        <span class="verif-icono" aria-hidden="true">○</span> Verificadas
+      </button>
+
+      <!-- Solo en modo edición (?editar) -->
+      <section id="seccion-seleccion" aria-labelledby="t-seleccion" hidden>
+        <div class="seccion-cabecera">
+          <h2 id="t-seleccion">Selección</h2>
+          <label class="mini-switch" title="Cada clic suma o quita tramos de la selección">
+            <input type="checkbox" id="multiple"> Varias
+          </label>
+        </div>
+        <div id="seleccion" class="tarjeta" aria-live="polite"></div>
+      </section>
+
+      <section id="seccion-cambios" aria-labelledby="t-cambios" hidden>
+        <h2 id="t-cambios">Cambios</h2>
+        <div id="cambios" class="tarjeta"></div>
+        <div class="descargas">
+          <button type="button" class="btn" data-accion="descargar" data-capa="asfalto">
+            <i class="bi bi-download" aria-hidden="true"></i>
+            asfalto.geojson
+          </button>
+          <button type="button" class="btn" data-accion="descargar" data-capa="tierra">
+            <i class="bi bi-download" aria-hidden="true"></i>
+            tierra.geojson
+          </button>
+        </div>
+      </section>
+
+      <!-- Compu (≥ 1024 px): pie con ayuda, leyenda, fecha y créditos -->
+      <footer class="pie-escritorio">
+        <div class="pie-izquierda">
+          <span>Tocá una capa de la barra para ocultarla</span>
+          <span class="leyenda-lineas">
+            <span title="Datos verificados en el relevamiento"><i class="linea-continua" aria-hidden="true"></i>verificada</span>
+            <span title="Datos identificados con imágenes satelitales"><i class="linea-punteada" aria-hidden="true"></i>satelital</span>
+          </span>
+        </div>
+        <p class="pie-derecha"><span data-fecha-corta>—</span> · <span data-creditos></span></p>
+      </footer>
+    </div>
+  </aside>
+
+  <button type="button" class="boton-redondo control-ver-todo" data-accion="ver-todo"
+          aria-label="Ver toda la ciudad" title="Ver toda la ciudad"><i class="bi bi-arrows-fullscreen" aria-hidden="true"></i></button>
+
+  <div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+  <noscript><p class="sin-js">Este mapa necesita JavaScript para funcionar.</p></noscript>
+
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
+          integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+  <script src="app.js"></script>
+</body>
+</html>

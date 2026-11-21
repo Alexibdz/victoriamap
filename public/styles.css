@@ -20,20 +20,19 @@
   --sheet-h: 0px;
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --panel-bg: rgba(22, 26, 35, 0.96);
-    --tinta: #e9ecf2;
-    --tenue: #a1aabb;
-    --linea: #2d3442;
-    --suave: #1d222c;
-    --hover: #272d39;
-    --primario: #e9ecf2;
-    --primario-tinta: #141821;
-    --alerta-bg: #3a2310;
-    --alerta-tinta: #ffc58f;
-    --sombra: 0 12px 32px rgba(0, 0, 0, 0.45), 0 2px 8px rgba(0, 0, 0, 0.3);
-  }
+/* Tema oscuro: lo activa tema.js (automático según el dispositivo, o elegido a mano) */
+:root[data-tema="oscuro"] {
+  --panel-bg: rgba(22, 26, 35, 0.96);
+  --tinta: #e9ecf2;
+  --tenue: #a1aabb;
+  --linea: #2d3442;
+  --suave: #1d222c;
+  --hover: #272d39;
+  --primario: #e9ecf2;
+  --primario-tinta: #141821;
+  --alerta-bg: #3a2310;
+  --alerta-tinta: #ffc58f;
+  --sombra: 0 12px 32px rgba(0, 0, 0, 0.45), 0 2px 8px rgba(0, 0, 0, 0.3);
 }
 
 *, *::before, *::after { box-sizing: border-box; }
@@ -56,62 +55,6 @@ body {
 }
 
 /* ---------- Panel ---------- */
-.panel {
-  position: absolute;
-  z-index: 1000;
-  top: 16px;
-  left: 16px;
-  width: 348px;
-  max-height: calc(100% - 32px);
-  display: flex;
-  flex-direction: column;
-  background: var(--panel-bg);
-  -webkit-backdrop-filter: blur(10px);
-  backdrop-filter: blur(10px);
-  border: 1px solid var(--linea);
-  border-radius: var(--radio);
-  box-shadow: var(--sombra);
-  overflow: hidden;
-}
-
-.panel-cabecera {
-  display: flex;
-  align-items: flex-start;
-  justify-content: space-between;
-  gap: 12px;
-  padding: 18px 20px 14px;
-  border-bottom: 1px solid var(--linea);
-}
-
-.eyebrow {
-  margin: 0 0 4px;
-  font-size: 11px;
-  font-weight: 600;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-  color: var(--tenue);
-}
-
-h1 {
-  margin: 0;
-  font-size: 18px;
-  line-height: 1.25;
-  font-weight: 650;
-  letter-spacing: -0.01em;
-  text-wrap: balance;
-}
-
-.panel-cuerpo {
-  overflow-y: auto;
-  overscroll-behavior: contain;
-  padding: 2px 20px 18px;
-}
-
-section {
-  padding: 16px 0;
-  border-bottom: 1px solid var(--linea);
-}
-
 h2 {
   margin: 0 0 10px;
   font-size: 12px;
@@ -131,172 +74,6 @@ h2 {
 .seccion-cabecera h2 { margin: 0; }
 
 /* ---------- Tarjetas de capa ---------- */
-.capas {
-  display: grid;
-  gap: 8px;
-}
-
-.capa {
-  position: relative;
-  display: grid;
-  grid-template-columns: auto 1fr auto;
-  align-items: start;
-  gap: 0 12px;
-  padding: 12px 14px 12px 12px;
-  border: 1px solid var(--linea);
-  border-radius: 12px;
-  cursor: pointer;
-  transition: background-color 0.15s, opacity 0.15s;
-  user-select: none;
-}
-
-.capa:hover { background: var(--suave); }
-.capa[data-capa="asfalto"] { --c: var(--c-asfalto); }
-.capa[data-capa="tierra"] { --c: var(--c-tierra); }
-
-.capa input {
-  position: absolute;
-  opacity: 0;
-  pointer-events: none;
-}
-
-.switch {
-  position: relative;
-  width: 34px;
-  height: 20px;
-  margin-top: 1px;
-  border-radius: 999px;
-  background: var(--linea);
-  transition: background-color 0.15s;
-}
-
-.switch::after {
-  content: "";
-  position: absolute;
-  top: 2px;
-  left: 2px;
-  width: 16px;
-  height: 16px;
-  border-radius: 50%;
-  background: #fff;
-  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
-  transition: transform 0.15s;
-}
-
-.capa input:checked + .switch { background: var(--c); }
-.capa input:checked + .switch::after { transform: translateX(14px); }
-.capa input:focus-visible + .switch { outline: 2px solid var(--c); outline-offset: 2px; }
-
-.capa-info { min-width: 0; }
-
-.capa-nombre {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  font-size: 15px;
-  font-weight: 600;
-  line-height: 22px;
-}
-
-.trazo {
-  width: 18px;
-  height: 4px;
-  border-radius: 2px;
-  background: var(--c);
-}
-
-.capa-detalle {
-  display: block;
-  margin-top: 2px;
-  font-size: 12px;
-  line-height: 1.4;
-  color: var(--tenue);
-}
-
-.capa-fuentes {
-  grid-column: 2 / -1;
-  margin-top: 6px;
-}
-
-.detalle-capa {
-  grid-column: 2 / -1;
-  margin-top: 6px;
-  font-size: 12px;
-  color: var(--tenue);
-}
-
-.detalle-capa summary {
-  width: fit-content;
-  cursor: pointer;
-  list-style-position: inside;
-}
-
-.detalle-capa summary:hover { color: var(--tinta); }
-.detalle-capa .capa-fuentes { margin-top: 4px; }
-
-.capa-conteo {
-  text-align: right;
-  font-size: 28px;
-  font-weight: 650;
-  line-height: 1;
-  letter-spacing: -0.02em;
-  font-variant-numeric: tabular-nums;
-}
-
-.capa-conteo small {
-  display: block;
-  margin-top: 4px;
-  font-size: 11px;
-  font-weight: 500;
-  letter-spacing: 0;
-  color: var(--tenue);
-}
-
-.capa.oculta { opacity: 0.55; }
-
-.capa-pendiente {
-  --c: var(--c-sinclasificar);
-  margin-top: 14px;
-  border-style: dashed;
-}
-
-.capa-pendiente .capa-conteo { font-size: 22px; }
-
-.trazo-punteado {
-  background: repeating-linear-gradient(90deg, var(--c) 0 5px, transparent 5px 8px);
-}
-
-.proporcion {
-  display: flex;
-  gap: 2px;
-  height: 8px;
-  margin: 14px 0 6px;
-  border-radius: 999px;
-  overflow: hidden;
-  background: var(--linea);
-}
-
-.proporcion span {
-  flex: 0 0 0;
-  background: var(--c);
-  transition: flex-basis 0.35s ease;
-}
-
-.proporcion-leyenda {
-  display: flex;
-  justify-content: space-between;
-  font-size: 12px;
-  color: var(--tenue);
-  font-variant-numeric: tabular-nums;
-}
-
-.total {
-  margin: 10px 0 0;
-  font-size: 13px;
-  font-variant-numeric: tabular-nums;
-}
-
-/* ---------- Selección y cambios ---------- */
 .tarjeta {
   padding: 14px;
   border-radius: 12px;
@@ -465,23 +242,7 @@ kbd {
   outline-offset: 2px;
 }
 
-.icono-btn {
-  display: none;
-  align-items: center;
-  justify-content: center;
-  width: 32px;
-  height: 32px;
-  flex: none;
-  padding: 0;
-  color: var(--tenue);
-  background: var(--suave);
-  border: 0;
-  border-radius: 8px;
-  cursor: pointer;
-}
-
-.icono-btn svg { transition: transform 0.2s; }
-.panel.plegado .icono-btn svg { transform: rotate(180deg); }
+.btn .bi, .segmentado .bi { line-height: 1; }
 
 .mini-switch {
   display: inline-flex;
@@ -499,93 +260,8 @@ kbd {
 }
 
 /* ---------- Pie ---------- */
-.pie {
-  display: flex;
-  flex-direction: column;
-  align-items: flex-start;
-  gap: 12px;
-  padding-top: 14px;
-  font-size: 12px;
-  color: var(--tenue);
-}
-
-.leyenda {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 14px;
-}
-
-.leyenda span {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-}
-
-.opciones {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 8px 18px;
-}
-
-.fondo {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-
-.actualizacion {
-  margin: 0;
-  font-size: 11px;
-  line-height: 1.4;
-  color: var(--tenue);
-}
-
-.credito-colaborativo {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 12px;
-  width: 100%;
-  padding-top: 12px;
-  border-top: 1px solid var(--linea);
-}
-
-.credito-fijo {
-  flex: none;
-  padding: 10px 20px 12px;
-  background: var(--panel-bg);
-}
-
-.credito-texto {
-  display: flex;
-  flex-direction: column;
-  gap: 3px;
-  min-width: 0;
-  color: var(--tenue);
-  line-height: 1.35;
-}
-
-.credito-texto strong {
-  color: var(--tinta);
-  font-size: 12px;
-}
-
-.credito-logos {
-  display: flex;
-  align-items: center;
-  flex: none;
-  gap: 8px;
-}
-
-.credito-logos img {
-  display: block;
-  width: 40px;
-  height: 40px;
-  object-fit: contain;
-  border-radius: 50%;
-  background: #fff;
-}
-
+/* Enlace a la portada (index.html) */
+/* Encabezado del panel: título y subtítulo con los colores de las capas */
 /* Etiqueta "Modo edición" (solo con ?editar en la URL) */
 .marca-edicion {
   display: none;
@@ -601,51 +277,18 @@ kbd {
 .modo-edicion .marca-edicion { display: inline-block; }
 
 /* Buscador de calles y alturas */
-.buscador {
-  display: flex;
-  gap: 8px;
-}
-
-.buscador input {
-  flex: 1;
-  min-width: 0;
-  height: 38px;
-  padding: 0 12px;
-  font: inherit;
-  font-size: 14px;
-  color: var(--tinta);
-  background: var(--panel-bg);
-  border: 1px solid var(--linea);
-  border-radius: 10px;
-}
-
-.buscador input:focus-visible {
-  outline: 2px solid var(--c-asfalto);
-  outline-offset: 1px;
-}
-
-.buscador .btn { min-width: 42px; padding: 0 12px; }
-.buscador input:placeholder-shown + .btn-limpiar { display: none; }
-.buscador .btn-limpiar {
-  min-width: 38px;
-  padding: 0;
-  font-size: 20px;
-  line-height: 1;
-}
 .resultado { margin-top: 10px; }
 
 .resultado .acciones {
   margin-top: 12px;
 }
 
+/* Controles flotantes a la derecha: [ver toda la ciudad] [zoom] arriba; debajo del zoom, tema y fondo. */
 .control-ver-todo {
   position: fixed;
-  z-index: 900;
-  top: 94px;
-  right: 12px;
-  min-height: 38px;
-  box-shadow: var(--sombra);
-  background: var(--panel-bg);
+  z-index: 1001;
+  top: 16px;
+  right: 64px;
 }
 
 /* Pin de la dirección encontrada */
@@ -660,7 +303,7 @@ kbd {
   background: var(--c-sel);
   border: 3px solid #fff;
   box-shadow: 0 0 0 6px color-mix(in srgb, var(--c-sel) 35%, transparent), 0 2px 6px rgba(0, 0, 0, 0.35);
-  animation: latido 1.6s ease-out infinite;
+  animation: caer 0.55s cubic-bezier(0.3, 1.5, 0.5, 1) both, latido 1.6s ease-out 0.55s infinite;
 }
 
 @keyframes latido {
@@ -767,6 +410,8 @@ kbd {
   background: #e9edf1;
 }
 
+[data-tema="oscuro"] .leaflet-container { background: #2b2d31; }
+
 .leaflet-top.leaflet-right { margin: 6px 6px 0 0; }
 
 .leaflet-bar,
@@ -790,31 +435,6 @@ kbd {
 .leaflet-bar a:hover { background: var(--hover); }
 .leaflet-halos-pane canvas { pointer-events: none; }
 
-/* Créditos del mapa plegados en una "i"; al tocarla se despliegan */
-.leaflet-container .leaflet-control-attribution {
-  margin: 0 6px 6px 0;
-  padding: 3px 8px;
-  border-radius: 8px;
-  background: var(--panel-bg);
-  cursor: pointer;
-}
-
-.leaflet-container .leaflet-control-attribution.plegada {
-  display: grid;
-  place-items: center;
-  width: 22px;
-  height: 22px;
-  padding: 0;
-  border-radius: 50%;
-  font-size: 0;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
-}
-
-.leaflet-control-attribution.plegada::before {
-  content: "i";
-  font: italic 700 13px/1 Georgia, serif;
-  color: var(--tenue);
-}
 /* Nombres de calles: escritos sobre la calle pintada, con halo para leerse sobre cualquier color. */
 .leaflet-etiquetas-pane { pointer-events: none; }
 
@@ -831,48 +451,741 @@ kbd {
   pointer-events: none;
 }
 
-.fondo-satelite .etiqueta span {
+.fondo-oscuro .etiqueta span {
   color: #fff;
   text-shadow: 0 0 2px #000, 0 0 2px #000, 0 0 3px #000, 0 0 5px rgba(0, 0, 0, 0.8);
 }
 
-/* ---------- Móvil: el panel pasa a ser una hoja inferior ---------- */
+/* Menús de tema y fondo (tema.css), el fondo debajo del tema.
+   Compu: abajo a la derecha, con los menús abriéndose hacia arriba. Celular: arriba a la izquierda. */
+.tema-menu,
+.fondo-menu { top: auto; left: auto; right: 16px; }
+.tema-menu { bottom: 68px; }
+.fondo-menu { bottom: 16px; }
+.tema-menu .menu-opciones,
+.fondo-menu .menu-opciones { top: auto; bottom: calc(100% + 8px); left: auto; right: 0; transform-origin: bottom right; }
+.menu-flotante.abierto { z-index: 1002; } /* el menú abierto queda por encima del otro botón */
+
+@media (max-width: 720px) {
+  .tema-menu,
+  .fondo-menu { left: 12px; right: auto; bottom: auto; }
+  .tema-menu { top: 12px; }
+  .fondo-menu { top: 64px; }
+  .tema-menu .menu-opciones,
+  .fondo-menu .menu-opciones { top: calc(100% + 8px); bottom: auto; left: 0; right: auto; transform-origin: top left; }
+}
+
+/* Leyenda de líneas al principio de la sección Capas */
+/* Escala del mapa: píldora del mismo alto que la "i" de créditos, en la misma fila y a su izquierda.
+   El ancho lo pone Leaflet (es el largo que representa); la rayita de abajo lo marca. */
+.leaflet-bottom.leaflet-right {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 0 6px 6px 0;
+}
+
+.leaflet-bottom.leaflet-right .leaflet-control {
+  float: none;
+  clear: none;
+  margin: 0;
+}
+
+.leaflet-container .leaflet-control-scale-line {
+  position: relative;
+  height: 24px;
+  padding: 3px 10px 0;
+  font-size: 11px;
+  font-weight: 650;
+  line-height: 13px;
+  text-align: center;
+  color: var(--tinta);
+  text-shadow: none; /* Leaflet trae un halo blanco que en oscuro se ve mal */
+  background: var(--panel-bg);
+  border: 1px solid var(--linea);
+  border-radius: 999px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
+}
+
+.leaflet-container .leaflet-control-scale-line::after {
+  content: "";
+  position: absolute;
+  left: 10px;
+  right: 10px;
+  bottom: 4px;
+  height: 2px;
+  border-radius: 2px;
+  background: var(--c-asfalto);
+  opacity: 0.8;
+}
+
+/* ---------- Animaciones ---------- */
+@keyframes subir {
+  from { opacity: 0; transform: translateY(12px); }
+  to { opacity: 1; transform: none; }
+}
+
+@keyframes entrar-izquierda {
+  from { opacity: 0; transform: translateX(-28px); }
+  to { opacity: 1; transform: none; }
+}
+
+@keyframes entrar-abajo {
+  from { opacity: 0; transform: translateY(48px); }
+  to { opacity: 1; transform: none; }
+}
+
+@keyframes aparecer {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+/* Pin de la dirección: cae y rebota, después late. */
+@keyframes caer {
+  from { opacity: 0; transform: translate(-50%, -280%); }
+  to { opacity: 1; transform: translate(-50%, -50%); }
+}
+
+/* Número que cambió (por ejemplo, al mover una cuadra): un pequeño salto. */
+@keyframes latir-numero {
+  0% { transform: scale(1); }
+  40% { transform: scale(1.18); }
+  100% { transform: scale(1); }
+}
+
+
+
+.control-ver-todo,
+.tema-menu,
+.leaflet-control-zoom { animation: aparecer 0.5s ease 0.25s both; }
+
+#seccion-cambios:not([hidden]),
+.resultado.aparecer { animation: subir 0.35s cubic-bezier(0.2, 0.7, 0.2, 1) both; }
+
+.latir { animation: latir-numero 0.45s ease; }
+
+
+@media (max-width: 720px) {
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-delay: 0s !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
+/* =========================================================================
+   Panel (rediseño): chips de capas + tarjeta con encabezado, buscador y bloque expandible.
+   En celular flota abajo (left/right 12 px, bottom 16 px) con un degradé del color del mapa detrás;
+   en compu, arriba a la izquierda. Los colores de la especificación son del tema oscuro;
+   en el claro se usan sus equivalentes claros.
+   ========================================================================= */
+:root {
+  --chip-asfalto: #3b5bdb;
+  --chip-tierra: #e8590c;
+  --p-fondo: #ffffff;
+  --p-borde: #e3e7ee;
+  --p-campo: #f3f5f8;
+  --p-campo-borde: #dde2ea;
+  --p-separador: #eceff3;
+  --p-texto: #172033;
+  --p-tenue: #5b6475;
+  --p-numero: #6b7385;
+  --p-leyenda: #6b7385;
+  --p-chip-borde: #dde2ea;
+  --p-verif-borde: #5b6475;
+  --p-verif-fondo: #e9ecf1;
+  --p-sombra-chip: 0 4px 12px rgba(15, 23, 42, 0.14);
+  --p-sombra-tarjeta: 0 12px 32px rgba(15, 23, 42, 0.18);
+  --mapa-color: #e8e8e8;
+  /* Panel de compu (≥ 1024 px) */
+  --p-barra-apagada: #e6e9ee;
+  --p-barra-apagada-texto: #7d8592;
+  --p-barra-asfalto-texto: #ffffff;
+  --p-barra-tierra-texto: #ffffff;
+  --p-verde: oklch(0.55 0.13 155);
+  --p-linea-verificada: #5b6475;
+  --p-linea-satelital: #8a919d;
+  --p-sombra-dock: 0 16px 40px rgba(15, 23, 42, 0.22);
+}
+
+:root[data-tema="oscuro"] {
+  --chip-asfalto: oklch(0.72 0.13 262);
+  --chip-tierra: oklch(0.75 0.14 60);
+  --p-fondo: #16181d;
+  --p-borde: #2a2d35;
+  --p-campo: #1f2229;
+  --p-campo-borde: #2c313b;
+  --p-separador: #262a33;
+  --p-texto: #e8eaee;
+  --p-tenue: #9aa1ad;
+  --p-numero: #aeb4be;
+  --p-leyenda: #8a919d;
+  --p-chip-borde: #2a2f39;
+  --p-verif-borde: #8a919d;
+  --p-verif-fondo: #2a2f39;
+  --p-sombra-chip: 0 4px 12px rgba(0, 0, 0, 0.4);
+  --p-sombra-tarjeta: 0 12px 32px rgba(0, 0, 0, 0.55);
+  --mapa-color: #26282c;
+  --p-barra-apagada: #262930;
+  --p-barra-apagada-texto: #7d8592;
+  --p-barra-asfalto-texto: #0d1220;
+  --p-barra-tierra-texto: #1f1305;
+  --p-verde: oklch(0.68 0.13 155);
+  --p-linea-verificada: #c9ced6;
+  --p-linea-satelital: #8a919d;
+  --p-sombra-dock: 0 16px 40px rgba(0, 0, 0, 0.55);
+}
+
+/* Compu: el panel es un dock abajo al centro, angosto en alto (deja libres los botones de abajo a la derecha). */
+.panel {
+  position: absolute;
+  z-index: 1000;
+  bottom: 16px;
+  left: 50%;
+  width: min(720px, calc(100% - 200px));
+  max-height: calc(100% - 32px);
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  transform: translateX(-50%);
+}
+
+/* ---------- Chips de capas ---------- */
+.chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.chip-capa {
+  --c: var(--p-tenue);
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  height: 38px;
+  padding: 0 12px;
+  font: inherit;
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--p-texto);
+  background: var(--p-fondo);
+  border: 1px solid var(--p-chip-borde);
+  border-radius: 19px;
+  box-shadow: var(--p-sombra-chip);
+  cursor: pointer;
+  transition: background-color 0.2s ease, border-color 0.2s ease, transform 0.15s ease;
+}
+
+.chip-capa:active { transform: scale(0.97); }
+.chip-capa:focus-visible { outline: 2px solid var(--c); outline-offset: 2px; }
+.chip-capa[data-chip="asfalto"] { --c: var(--chip-asfalto); }
+.chip-capa[data-chip="tierra"] { --c: var(--chip-tierra); }
+
+.chip-capa[aria-pressed="true"] {
+  border-color: var(--c);
+  background: color-mix(in oklch, var(--c) 22%, var(--p-fondo));
+}
+
+.chip-punto {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: var(--c);
+}
+
+.chip-capa[aria-pressed="false"] .chip-punto { opacity: 0.45; }
+
+.chip-num {
+  display: inline-block;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  font-size: 12px;
+  color: var(--p-numero);
+}
+
+.chip-verificadas .bi { font-size: 14px; line-height: 1; }
+
+.chip-verificadas[aria-pressed="true"] {
+  border-color: var(--p-verif-borde);
+  background: var(--p-verif-fondo);
+}
+
+/* ---------- Tarjeta ---------- */
+.tarjeta-panel {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  min-height: 0;
+  padding: 14px;
+  color: var(--p-texto);
+  background: var(--p-fondo);
+  border: 1px solid var(--p-borde);
+  border-radius: 18px;
+  box-shadow: var(--p-sombra-tarjeta);
+}
+
+.panel-cabecera {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.titulo-panel { flex: 1; min-width: 0; }
+
+.titulo-panel h1 {
+  margin: 0;
+  font-size: 17px;
+  font-weight: 700;
+  line-height: 1.2;
+}
+
+.subtitulo {
+  margin: 2px 0 0;
+  font-size: 13px;
+  color: var(--p-tenue);
+}
+
+.sub-asfalto { color: var(--chip-asfalto); font-weight: 600; }
+.sub-tierra { color: var(--chip-tierra); font-weight: 600; }
+
+.panel-plegar {
+  display: grid;
+  place-items: center;
+  flex: none;
+  width: 40px;
+  height: 40px;
+  padding: 0;
+  font-size: 17px;
+  color: var(--p-texto);
+  background: var(--p-campo);
+  border: 1px solid var(--p-chip-borde);
+  border-radius: 12px;
+  cursor: pointer;
+}
+
+.panel-plegar:focus-visible { outline: 2px solid var(--chip-asfalto); outline-offset: 2px; }
+
+/* ---------- Buscador ---------- */
+.buscador {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.buscador input {
+  width: 100%;
+  height: 46px;
+  padding: 0 42px;
+  font: inherit;
+  font-size: 16px; /* 16 px o más: iOS no hace zoom al tocar el campo */
+  color: var(--p-texto);
+  background: var(--p-campo);
+  border: 1px solid var(--p-campo-borde);
+  border-radius: 12px;
+  -webkit-appearance: none;
+  appearance: none;
+}
+
+.buscador input::placeholder { color: var(--p-tenue); }
+.buscador input::-webkit-search-cancel-button { display: none; }
+.buscador input:focus { outline: none; border-color: var(--chip-asfalto); } /* sin recuadro grueso al escribir */
+
+.buscador-lupa,
+.btn-limpiar {
+  position: absolute;
+  top: 50%;
+  display: grid;
+  place-items: center;
+  width: 36px;
+  height: 36px;
+  padding: 0;
+  font-size: 16px;
+  color: var(--p-tenue);
+  background: transparent;
+  border: 0;
+  border-radius: 10px;
+  transform: translateY(-50%);
+  cursor: pointer;
+}
+
+.buscador-lupa { left: 5px; }
+.btn-limpiar { right: 5px; font-size: 14px; }
+.buscador-lupa:hover, .btn-limpiar:hover { color: var(--p-texto); }
+.buscador input:placeholder-shown ~ .btn-limpiar { display: none; }
+
+.resultado { margin-top: 0; }
+
+/* ---------- Búsqueda desplegable (transición de altura con grid 0fr / 1fr) ----------
+   El panel arranca cerrado (encabezado, chips y gráfico); el botón ⌃/⌄ agrega la búsqueda (.panel.abierto). */
+.expandible {
+  display: grid;
+  grid-template-rows: 0fr;
+  min-height: 0;
+  margin-top: -12px; /* cerrado no deja el hueco del gap de la tarjeta */
+  transition: grid-template-rows 0.3s ease, margin 0.3s ease;
+}
+
+.expandible-interior {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  min-height: 0;
+  overflow: hidden;
+}
+
+.panel.abierto .expandible { grid-template-rows: 1fr; margin-top: 0; }
+.panel.abierto .expandible-interior { overflow: hidden auto; }
+
+/* Gráfico de proporción: siempre visible */
+.grafico {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding-top: 12px;
+  border-top: 1px solid var(--p-separador);
+}
+
+.proporcion {
+  display: flex;
+  gap: 2px;
+  height: 8px;
+  overflow: hidden;
+  border-radius: 4px;
+}
+
+.proporcion .barra-capa {
+  flex: 0 1 calc(var(--pct, 0) * 1%);
+  min-width: 0;
+  padding: 0;
+  font: inherit;
+  border: 0;
+  border-radius: 4px;
+  pointer-events: none; /* en celular es solo un gráfico; las capas se prenden con los chips */
+  transition: flex-basis 0.35s ease, flex-grow 0.35s ease, opacity 0.2s ease, background-color 0.2s ease;
+}
+
+.proporcion .barra-capa > span { display: none; } /* textos de la barra: solo en compu */
+.proporcion [data-barra="asfalto"] { background: var(--chip-asfalto); }
+.proporcion [data-barra="tierra"] { background: var(--chip-tierra); }
+.proporcion .barra-capa.apagada { opacity: 0.45; }
+
+/* Elementos que existen solo en el panel de compu (≥ 1024 px) */
+.subtitulo-escritorio,
+.verificadas-escritorio,
+.pie-escritorio { display: none; }
+
+.proporcion-leyenda {
+  display: flex;
+  justify-content: space-between;
+  font-size: 13px;
+  color: var(--p-numero);
+  font-variant-numeric: tabular-nums;
+}
+
+.proporcion-leyenda strong { font-weight: 600; color: var(--p-texto); }
+
+.pie-datos {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  font-size: 12px;
+  color: var(--p-leyenda);
+}
+
+/* Leyenda dentro del subtítulo, en lugar de "Entre Ríos" */
+.subtitulo .leyenda { display: inline-flex; gap: 10px; vertical-align: middle; }
+.subtitulo .leyenda span { display: inline-flex; align-items: center; gap: 4px; color: var(--p-tenue); }
+.actualizacion { color: var(--p-leyenda); }
+
+/* Secciones del modo edición, debajo del gráfico */
+.tarjeta-panel > section {
+  padding-top: 12px;
+  border-top: 1px solid var(--p-separador);
+}
+
+/* Entrada: los chips y la tarjeta aparecen un poco escalonados */
+.chips { animation: subir 0.45s cubic-bezier(0.2, 0.7, 0.2, 1) 0.05s both; }
+.tarjeta-panel { animation: subir 0.45s cubic-bezier(0.2, 0.7, 0.2, 1) 0.12s both; }
+
+/* ---------- Celular: panel flotante abajo ---------- */
 @media (max-width: 720px) {
   .panel {
     top: auto;
-    left: 8px;
-    right: 8px;
-    bottom: 8px;
-    width: auto;
-    max-height: 50vh;
-    max-height: 50dvh;
-    border-radius: 18px;
-  }
-
-  .panel-cabecera { padding: 14px 16px 12px; }
-  .panel-cuerpo { padding: 0 16px 14px; }
-  h1 { font-size: 16px; }
-  .icono-btn { display: inline-flex; }
-  .panel.plegado .panel-cuerpo { display: none; }
-  .panel.plegado .panel-cabecera { border-bottom: 0; }
-
-  .leaflet-bottom { bottom: var(--sheet-h); }
-
-  .btn { min-height: 44px; }
-  .buscador input { height: 44px; }
-  .control-ver-todo {
-    top: 12px;
     left: 12px;
-    right: auto;
+    right: 12px;
+    bottom: 16px;
+    width: auto;
+    max-height: calc(100% - 140px); /* deja libres los botones de arriba */
+    transform: none;
   }
-  .credito-logos img {
-    width: 36px;
-    height: 36px;
+
+  /* Si no entra (por ejemplo, con el teclado abierto), la tarjeta se desplaza: nada se aplasta ni se recorta. */
+  .tarjeta-panel { overflow-y: auto; overscroll-behavior: contain; }
+  .tarjeta-panel > * { flex-shrink: 0; }
+
+  /* Degradé del color del mapa detrás del panel, para que el mapa no compita con él */
+  .degradado-panel {
+    position: fixed;
+    z-index: 999;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    height: 150px;
+    background: linear-gradient(to bottom, transparent, var(--mapa-color));
+    pointer-events: none;
   }
-  .credito-fijo { padding: 8px 16px 10px; }
+
+  /* La escala y la "i" quedan por encima del panel, alineadas a la derecha */
+  .leaflet-bottom { bottom: calc(var(--sheet-h) + 8px); }
+  .leaflet-bottom.leaflet-right { gap: 8px; padding: 0 12px 0 0; }
 
   .toast {
     left: 50%;
     bottom: calc(var(--sheet-h) + 10px);
   }
+
+  .btn { min-height: 44px; }
+}
+
+@media (min-width: 721px) {
+  .degradado-panel { display: none; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .expandible { transition: none; }
+}
+
+/* Escala: debajo del botón de centrar el mapa ("Ver toda la ciudad"), alineada con él a la derecha.
+   app.js mueve el control de escala a la esquina del mapa con esta clase. */
+.leaflet-container .escala-flotante {
+  position: absolute;
+  z-index: 1000;
+  top: 66px;
+  right: 64px;
+  margin: 0;
+}
+
+/* Créditos del mapa dentro del panel (OpenStreetMap y el fondo de Esri) */
+.creditos-mapa {
+  margin: 0;
+  font-size: 10.5px;
+  line-height: 1.4;
+  color: var(--p-leyenda);
+}
+
+.creditos-mapa a { color: inherit; text-underline-offset: 2px; }
+
+/* Celular con poca altura (teclado abierto): el panel puede ocupar casi toda la pantalla */
+@media (max-width: 720px) and (max-height: 520px) {
+  .panel { max-height: calc(100% - 24px); }
+}
+
+/* Dock de compu: chips centrados; en la tarjeta, título a la izquierda y gráfico a la derecha;
+   la búsqueda (al abrir) y las secciones de edición ocupan todo el ancho debajo. */
+@media (min-width: 721px) {
+  .chips { justify-content: center; }
+
+  .tarjeta-panel {
+    display: grid;
+    grid-template-columns: minmax(230px, auto) 1fr;
+    align-items: center;
+    column-gap: 18px;
+    row-gap: 12px;
+  }
+
+  .panel-cabecera { grid-column: 1; grid-row: 1; }
+
+  .grafico {
+    grid-column: 2;
+    grid-row: 1;
+    padding: 0 0 0 18px;
+    border-top: 0;
+    border-left: 1px solid var(--p-separador);
+  }
+
+  #alerta,
+  .expandible,
+  .tarjeta-panel > section { grid-column: 1 / -1; }
+}
+
+/* =========================================================================
+   Panel de compu (≥ 1024 px, "opción 3b"): un solo panel fijo abajo al centro, sin desplegable.
+   Fila 1: título · buscador · barra-filtro (cada parte prende o apaga su capa) · Verificadas.
+   Fila 2 (pie): ayuda, leyenda, fecha de relevamiento y créditos. Los chips y el botón ⌃/⌄ se ocultan;
+   el buscador, la barra y los datos son los mismos elementos que en celular, reubicados con grid
+   (display: contents en sus contenedores). Celular y tablet (< 1024 px) no cambian.
+   ========================================================================= */
+@media (min-width: 1024px) {
+  .panel {
+    bottom: 20px;
+    width: min(1120px, calc(100% - 160px)); /* no pisa los botones de tema y fondo de la derecha */
+    font-family: "IBM Plex Sans", ui-sans-serif, system-ui, sans-serif;
+  }
+
+  .chips,
+  .panel-plegar,
+  .subtitulo,
+  .proporcion-leyenda,
+  .pie-datos,
+  .creditos-mapa { display: none; }
+
+  .tarjeta-panel {
+    display: grid;
+    grid-template-columns: auto 300px minmax(0, 1fr) auto;
+    align-items: center;
+    column-gap: 14px;
+    row-gap: 10px;
+    padding: 14px 16px 10px 18px;
+    box-shadow: var(--p-sombra-dock);
+  }
+
+  .expandible,
+  .expandible-interior,
+  .grafico { display: contents; }
+
+  .panel-cabecera { grid-column: 1; grid-row: 1; white-space: nowrap; }
+  .titulo-panel h1 { font-size: 16px; font-weight: 700; color: var(--p-texto); }
+
+  .subtitulo-escritorio {
+    display: block;
+    margin: 2px 0 0;
+    font-size: 12px;
+    color: var(--p-tenue);
+  }
+
+  .subtitulo-escritorio .marca-edicion { margin-left: 8px; }
+
+  /* Buscador: 300 px fijos */
+  .buscador { grid-column: 2; grid-row: 1; }
+
+  .buscador input {
+    height: 42px;
+    padding: 0 38px 0 40px;
+    font-size: 15px;
+  }
+
+  /* Barra de proporción como filtro: cada parte es un botón con su ancho según el % por longitud */
+  .proporcion {
+    grid-column: 3;
+    grid-row: 1;
+    height: 42px;
+    gap: 3px;
+    overflow: visible;
+    border-radius: 0;
+  }
+
+  .proporcion .barra-capa {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+    flex: var(--pct, 1) 1 0;
+    font-size: 14px;
+    font-weight: 600;
+    white-space: nowrap;
+    cursor: pointer;
+    pointer-events: auto;
+  }
+
+  .proporcion .barra-capa > span { display: inline; overflow: hidden; text-overflow: ellipsis; }
+  .proporcion .barra-capa.apagada { opacity: 1; }
+  .proporcion .barra-capa:focus-visible { outline: 2px solid var(--p-texto); outline-offset: 2px; }
+
+  .barra-pct {
+    flex: none;
+    font-family: "IBM Plex Mono", ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  }
+
+  .proporcion [data-barra="asfalto"] {
+    padding: 0 14px;
+    color: var(--p-barra-asfalto-texto);
+    border-radius: 12px 4px 4px 12px;
+  }
+
+  .proporcion [data-barra="tierra"] {
+    min-width: 150px;
+    padding: 0 12px;
+    color: var(--p-barra-tierra-texto);
+    border-radius: 4px 12px 12px 4px;
+  }
+
+  .proporcion .barra-capa[aria-pressed="false"] {
+    color: var(--p-barra-apagada-texto);
+    background: var(--p-barra-apagada);
+  }
+
+  /* Verificadas: interruptor ○ / ✓ */
+  .verificadas-escritorio {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    grid-column: 4;
+    grid-row: 1;
+    height: 42px;
+    padding: 0 14px;
+    font: inherit;
+    font-size: 14px;
+    font-weight: 500;
+    color: var(--p-texto);
+    white-space: nowrap;
+    background: var(--p-campo);
+    border: 1px solid var(--p-chip-borde);
+    border-radius: 12px;
+    cursor: pointer;
+    transition: background-color 0.2s ease, border-color 0.2s ease;
+  }
+
+  .verificadas-escritorio[aria-pressed="true"] {
+    border-color: var(--p-verde);
+    background: color-mix(in oklch, var(--p-verde) 22%, var(--p-fondo));
+  }
+
+  .verificadas-escritorio:focus-visible { outline: 2px solid var(--p-verde); outline-offset: 2px; }
+
+  /* Lo que va debajo de la fila 1 ocupa todo el ancho: aviso, resultado de búsqueda, edición y pie */
+  #alerta,
+  .resultado,
+  .tarjeta-panel > section,
+  .pie-escritorio { grid-column: 1 / -1; }
+
+  .tarjeta-panel > section { padding-top: 10px; }
+
+  .pie-escritorio {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    font-size: 12px;
+    color: var(--p-leyenda);
+  }
+
+  .pie-izquierda,
+  .leyenda-lineas { display: flex; align-items: center; gap: 16px; }
+  .leyenda-lineas > span { display: inline-flex; align-items: center; gap: 6px; }
+  .leyenda-lineas i { display: inline-block; width: 18px; }
+  .linea-continua { border-top: 2px solid var(--p-linea-verificada); }
+  .linea-punteada { border-top: 2px dashed var(--p-linea-satelital); }
+
+  .pie-derecha { margin: 0; text-align: right; }
+  .pie-derecha a { color: inherit; text-underline-offset: 2px; }
+
+  /* Degradé de 170 px del color del mapa detrás del panel */
+  .degradado-panel {
+    display: block;
+    position: fixed;
+    z-index: 999;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    height: 170px;
+    background: linear-gradient(to bottom, transparent, var(--mapa-color) 45%);
+    pointer-events: none;
+  }
+
+  /* Los avisos aparecen arriba del panel */
+  .toast { left: 50%; bottom: calc(var(--sheet-h) + 10px); }
 }

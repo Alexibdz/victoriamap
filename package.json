@@ -9,8 +9,7 @@
     "alturas": "node scripts/osm-alturas.mjs",
     "sin-clasificar": "node scripts/sin-clasificar.mjs",
     "nombres": "node scripts/nombres.mjs",
-    "dev": "node scripts/serve.mjs 5173",
-    "test": "node tests/e2e.mjs"
+    "dev": "node scripts/serve.mjs 5173"
   },
   "engines": {
     "node": ">=22"

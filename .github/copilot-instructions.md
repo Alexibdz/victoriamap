@@ -4,7 +4,7 @@
     y la bitácora en docs/ (por qué se tomó cada decisión).
   - No cambies las restricciones (sitio estático, sin base de datos, sin frameworks) sin que lo pida el dueño.
   - No publiques (vercel --prod) ni hagas push por tu cuenta: el dueño revisa en localhost (npm run dev).
-  - Corré `npm test` antes de dar un cambio por terminado.
+  - No hay pruebas automáticas (el dueño las pidió fuera): se revisa a mano en `npm run dev`.
   - OBLIGATORIO: documentá cada cambio y cada decisión en los .md (bitácora en docs/ e instrucciones),
     para que el dueño, cuando retome el proyecto, pueda ver qué se hizo y por qué.
 -->
@@ -15,14 +15,14 @@ Mapa web que muestra las calles de **asfalto** y de **tierra** de Victoria (Entr
 sobre Leaflet. Funciona como expositor: sitio estático publicado en Vercel, **sin base de datos**.
 
 - Producción: https://victoriamap.vercel.app
-- Historia y decisiones del proyecto: [docs/sesion-2026-11-16.md](../docs/sesion-2026-11-16.md) y
-  [docs/sesion-2026-11-20.md](../docs/sesion-2026-11-20.md)
+- Historia y decisiones del proyecto: [docs/sesion-2026-11-16.md](../docs/sesion-2026-11-16.md),
+  [docs/sesion-2026-11-20.md](../docs/sesion-2026-11-20.md) y [docs/sesion-2026-11-21.md](../docs/sesion-2026-11-21.md)
 
 ## Si sos un agente de IA (leé esto primero)
 
 1. Leé este archivo entero y la bitácora en `docs/` antes de cambiar nada: ahí está por qué el proyecto es así.
 2. Respetá "Qué tiene que seguir funcionando" y "Restricciones". Si un pedido las contradice, avisá y preguntá.
-3. Al terminar: `npm test` pasa, se probó a ancho de celular y queda corriendo en `npm run dev` para que lo revise
+3. Al terminar: se probó a mano en compu y a ancho de celular, y queda corriendo en `npm run dev` para que lo revise
    el dueño. **No publiques ni hagas push** salvo que el dueño lo pida explícitamente para ese cambio.
 4. **Documentá en los `.md` todo lo que hagas** (esto es obligatorio, no opcional):
    - En `docs/`, agregá una sección a la bitácora del día o creá `docs/sesion-AAAA-MM-DD.md`, con el pedido
@@ -42,15 +42,56 @@ sobre Leaflet. Funciona como expositor: sitio estático publicado en Vercel, **s
    (p. ej. `http://127.0.0.1:5173/?editar`) muestra la sección Selección, mover/pintar, deshacer, Cambios y
    descargas. Sin `?editar` se ignoran los cambios guardados en el navegador: siempre se ven los datos publicados.
 5. Capa **Sin clasificar** (`public/data/sin-clasificar.geojson`): cuadras de OpenStreetMap que no están en
-   ningún archivo (p. ej. Suipacha). Se seleccionan y se **pintan** como asfalto o tierra; desde ese momento
-   son tramos normales de esa capa, no un dibujo aparte.
-6. **Nombres de calles** escritos sobre la calle pintada (desde zoom 15), con un interruptor para ocultarlos.
+   ningún archivo (p. ej. Suipacha). **Solo existe en modo edición** (`?editar`): ahí se ve en gris punteado,
+   se selecciona y se **pinta** como asfalto o tierra; desde ese momento es un tramo normal de esa capa.
+   En el expositor no se dibuja y **no tiene tarjeta ni interruptor** (el dueño la pidió fuera del panel).
+   **Panel** (rediseño del 21/11, ver bitácora): **chips de capas** siempre visibles (Asfalto N · Tierra N · ✓/○
+   Verificadas) y una **tarjeta**: encabezado "Calles de Victoria" con subtítulo "Asfalto y tierra · ━ verificada
+   ┅ satelital" (la leyenda reemplazó a "Entre Ríos") y botón ⌃/⌄. **Arranca cerrado** con el **gráfico** (barra por
+   longitud, "N % asfaltado" / "N % de tierra" y "Relevamiento realizado hasta el …"). **Abierto** agrega el
+   **buscador** y la línea de **créditos** de OSM/Esri (`abrirBusqueda()`; el foco va al campo solo con mouse, en
+   celular no, para que el teclado no aplaste el panel). Sugerencias desde la 2.ª letra, hasta 8 (`sugerirCalles()`).
+   **Compu ≥ 1024 px ("opción 3b")**: un **solo panel fijo abajo al centro, sin desplegable** (`width: min(1120px,
+   100% - 160px)`, degradé de 170 px detrás, IBM Plex Sans/Mono de Google Fonts): fila 1 = título + "N calles" · buscador
+   de 300 px · **barra-filtro** (dos botones con ancho según el % por longitud, calculado; cada uno prende o apaga su capa,
+   `aria-pressed`) · botón ○/✓ Verificadas; fila 2 = pie con ayuda, leyenda, "Relevamiento hasta el 16 nov 2026" y
+   créditos. Chips y ⌃/⌄ se ocultan. Son los **mismos elementos** del panel de celular reubicados con grid
+   (`display: contents`), más `.subtitulo-escritorio`, `.verificadas-escritorio` y `.pie-escritorio`; `ajustarPanelAncho()`
+   cambia lo que depende del ancho. **Tablet 721–1023 px**: el dock anterior (título a la izquierda y gráfico a la derecha);
+   tema y fondo **abajo a la derecha** con menús que abren hacia arriba; "Ver toda la ciudad" centra la ciudad en
+   toda la pantalla (`relleno(true)`). **Celular**: panel flotante abajo con degradé detrás, tema y fondo arriba a la
+   izquierda; si falta alto (teclado), la tarjeta se desplaza en vez de recortarse. Escala debajo del botón de
+   centrar (`.escala-flotante`). Sin "i" sobre el mapa, sin botón de volver ni interruptor de nombres.
+   Controles flotantes: arriba a la derecha "Ver toda la ciudad" (botón redondo, solo ícono) y el zoom; **arriba a la
+   izquierda** del mapa (en compu, justo a la derecha del panel) el **menú de tema** y debajo el **menú de fondo**
+   (ícono de mapa: Gris / Color / Satélite). La **escala** es una píldora debajo del botón de centrar el mapa. **Zoom suave**: los botones + y − vuelan medio segundo (`zoomSuave()`), y la rueda o el
+   pellizco avanzan de a cuartos de nivel (`zoomSnap: 0.25`, `wheelPxPerZoomLevel: 120`).
+6. **Nombres de calles** escritos sobre la calle pintada (desde el zoom más alejado), **siempre activados**: no hay
+   interruptor (pedido del dueño).
+13. **"Solo calles verificadas"** (chip "Verificadas", apagado por defecto, se recuerda): oculta las cuadras satelitales del mapa, y los
+    conteos, porcentajes, nombres y "Toda la calle" pasan a considerar solo lo que se ve (`filtrado()` / `seVe()`).
 7. **Buscador** de calle y altura ("Laprida 450"): ubica la dirección con un pin, resalta la cuadra y dice si es de
    asfalto o de tierra. Con solo el nombre resalta la calle entera. La búsqueda se puede limpiar, compartir mediante
    URL y cargar con `?q=...`; el control **Ver toda la ciudad** vuelve al encuadre general. La numeración
    **no se dibuja en el mapa** (pedido explícito): solo la usa el buscador.
-8. Fondo **Gris | Color | Satélite**, debajo del interruptor de nombres.
-9. **Zoom entre 15 y 18** (escala de 300 m a 50 m) y el mapa **no se puede llevar a más de 5 km** del área de los datos.
+8. Fondo **Gris | Color | Satélite**: menú redondo con ícono de mapa, debajo del botón de tema (ya no está en el panel).
+9. **Zoom entre 15 y 18** (escala de 300 m a 50 m) en compu, y **entre 14 y 18** (500 m a 50 m) en celular (≤ 720 px);
+   la vista inicial es la más alejada. El mapa **no se puede llevar a más de 5 km** del área de los datos.
+10. **Portada (landing)** en `index.html`; el mapa está en `mapa.html`, pero la URL es **`/mapa`** (sin `.html`:
+    `cleanUrls` en `vercel.json` y `scripts/serve.mjs` hace lo mismo; `/mapa.html` redirige). Los enlaces internos van a `mapa`. En compu la portada ocupa **exactamente la
+    pantalla, sin scroll** (probado a 1440×900, 1366×768 y 1280×720); en celular se desplaza y el botón
+    **"Ver el mapa" queda en el medio** de la primera pantalla. Explica el proyecto, cómo se hizo y el trabajo
+    colaborativo (logos, alumnos, IA). Las cifras (calles y % por longitud) se calculan con los GeoJSON y de fondo se dibujan las calles reales.
+    La superficie (**12–15 km² de ciudad**, Victoria con los alrededores sobre las rutas) es una **estimación fija del
+    dueño** en `index.html`: no se calcula (las cuadras relevadas cubren ~6,9 km²; se quitó "139,9 km relevados").
+    Los enlaces viejos a la raíz con `?q=` o `?editar` se redirigen a `mapa`.
+11. **Tema claro / oscuro** en las dos páginas: por defecto **automático** (según el dispositivo). El selector es
+    **un solo botón redondo** con el ícono de la opción elegida; al tocarlo se despliegan Automático / Claro /
+    Oscuro (`public/tema.js` + `public/tema.css`). Va **arriba a la izquierda** en las dos páginas; en el mapa, al lado del panel
+    (no dentro del panel: el panel recorta su contenido). Los menús flotantes son genéricos (`.menu-flotante`,
+    `.menu-boton`, `.menu-opciones`); el de fondo usa el mismo componente y sus opciones llevan `data-accion="fondo"`. Con tema oscuro el fondo Gris del mapa pasa a gris oscuro.
+12. **Animaciones** suaves en todo el sitio, y **ninguna** si el dispositivo pide "reducir movimiento"
+    (`prefers-reduced-motion`): en CSS hay un bloque que las anula y en JS se consulta `movimientoReducido()`.
 
 Extras ya implementados: selección múltiple (Shift/Ctrl+clic o el interruptor **Varias**), botón **Toda la calle**
 (selecciona todas las cuadras con el mismo nombre), deshacer (Ctrl+Z y botón en el aviso), restablecer,
@@ -69,10 +110,11 @@ En la interfaz se habla de **calles** y **cuadras**, nunca de "tramos" ni de ids
   reemplazando los de `public/data/`.
 - **Nada se publica sin revisión en localhost.** No correr `vercel --prod` ni hacer push a la rama de
   producción por cuenta propia: se entrega el cambio funcionando en `npm run dev` y el dueño lo audita y publica.
-- **Leaflet 1.9.4** desde unpkg con hash SRI (`integrity`) en `public/index.html`. Si cambia la versión,
+- **Leaflet 1.9.4** desde unpkg con hash SRI (`integrity`) en `public/mapa.html`. Si cambia la versión,
   recalcular el hash: `curl -s URL | openssl dgst -sha256 -binary | openssl base64 -A`.
 - **Vercel** publica solo `public/` (`vercel.json` → `outputDirectory`). No hay paso de build.
-- Node ≥ 22 solo se usa para los scripts locales (`scripts/`, `tests/`).
+- Node ≥ 22 solo se usa para los scripts locales (`scripts/`).
+- **No hay pruebas automáticas**: el dueño pidió quitarlas (gastaban tiempo y tokens). No las vuelvas a agregar sin que lo pida.
 - La app no consulta OpenStreetMap en vivo: los nombres y las calles faltantes se calculan con los scripts
   y quedan en los GeoJSON.
 
@@ -80,7 +122,11 @@ En la interfaz se habla de **calles** y **cuadras**, nunca de "tramos" ni de ids
 
 | Ruta | Qué es |
 |---|---|
-| `public/index.html` | Estructura del panel y carga de Leaflet |
+| `public/index.html` | Portada (landing): presentación del proyecto y botón "Ver el mapa". No carga Leaflet |
+| `public/landing.css`, `public/landing.js` | Estilos de la portada; cifras y dibujo de las calles de fondo (canvas) |
+| `public/tema.js`, `public/tema.css` | Tema claro/oscuro compartido: pone `<html data-tema>`, guarda la elección, emite `cambio-tema` y maneja el botón redondo con su menú |
+| `public/mapa.html` | El mapa: estructura del panel y carga de Leaflet |
+| `public/img/` | Logos del Instituto Superior "Gaspar L. Benavento" y de la E.E.T. N° 1 |
 | `public/app.js` | Toda la lógica: carga, mapa, selección, mover/pintar, deshacer, nombres, persistencia, panel |
 | `public/styles.css` | Estilos; variables de color en `:root`, modo oscuro y móvil (≤ 720 px) |
 | `public/data/asfalto.geojson`, `tierra.geojson` | Las dos capas publicadas (lo que ve la gente) |
@@ -96,7 +142,6 @@ En la interfaz se habla de **calles** y **cuadras**, nunca de "tramos" ni de ids
 | `scripts/nombres.mjs` | Agrega `nombre` a los tramos de los 3 archivos (en el lugar, no pisa cambios) |
 | `scripts/geo.mjs` | Geometría compartida por los scripts |
 | `scripts/serve.mjs` | Servidor estático local sin dependencias |
-| `tests/e2e.mjs` | Prueba de punta a punta con Chrome/Edge headless (DevTools Protocol) |
 | `vercel.json` | Configuración de Vercel |
 
 ## Modelo de datos
@@ -125,7 +170,9 @@ En la interfaz se habla de **calles** y **cuadras**, nunca de "tramos" ni de ids
 - Un único objeto `estado` (tramos, capas visibles, selección, historial, modo múltiple, nombres, fondo).
   Cada tramo: `{ id, props, geometry, capa, original, largo, layer }`, donde `original` es la capa en los
   datos publicados y `capa` la actual.
-- Zoom entre `ZOOM_MIN = 15` (escala ~300 m, se ve toda la ciudad) y `ZOOM_MAX = 18` (escala ~50 m: más cerca, el
+- Zoom mínimo según el ancho: `zoomMinimo()` da 15 en compu (escala ~300 m) y 14 en celular (≤ 720 px, escala
+  ~500 m); se recalcula al cambiar el tamaño de la ventana. Los nombres se ven desde ese mismo zoom (`zoomEtiquetas()`).
+- Zoom entre `zoomMinimo()` (antes `ZOOM_MIN = 15`; se ve toda la ciudad) y `ZOOM_MAX = 18` (escala ~50 m: más cerca, el
   satélite de Esri muestra "Map data not yet available"). `limitarArea()` fija `maxBounds` al área de los datos
   más `LIMITE_M = 5000` m, con `maxBoundsViscosity: 1` (no se puede salir).
 - Las calles se dibujan en un renderer **canvas** con `tolerance: 8`. El ancho sale de `anchoCalle()`:
@@ -143,21 +190,22 @@ En la interfaz se habla de **calles** y **cuadras**, nunca de "tramos" ni de ids
   `ubicarAltura()` busca en `alturas.json` los dos números del mismo lado (par/impar) que encierran la altura,
   a menos de 250 m entre sí (misma cuadra), e interpola; si no hay, usa el más cercano y lo avisa.
   El resaltado y el pin van en la capa `resaltado`, aparte de la selección.
+- Movimiento del mapa: `encuadrar()` **vuela** (`flyToBounds`) salvo que reciba `{ animate: false }` o haya
+  movimiento reducido; la búsqueda usa `flyTo`. La vista inicial usa `verTodaLaCiudad(false)` (sin vuelo).
+  Las pruebas que miden posición esperan a que termine el vuelo.
 - **Todo cambio de capa pasa por `asignarCapa()`**. `mover()` además apila en `estado.historial`,
   guarda y vuelve a pintar el panel. "Pintar" es `mover()` desde `SIN`. No mover capas de Leaflet por fuera.
 - El panel se redibuja con `render()` (`renderCapas`, `renderSeleccion`, `renderCambios`, `actualizarEtiquetas`).
-  Los datos técnicos de fuente van plegados en `<details>` para priorizar calles, kilómetros y porcentajes;
-  la fecha pública se toma de `ACTUALIZACION_DATOS` y debe mantenerse junto con los datos publicados.
+  Las tarjetas de capa solo muestran el número de calles (`renderCapas` recorre `CAPAS`, no `TODAS`);
+  la fecha pública sale de `FECHA_DATOS` (año, mes, día; de ahí `ACTUALIZACION_DATOS` larga y `ACTUALIZACION_CORTA`)
+  y debe mantenerse junto con los datos publicados.
   Los botones usan `data-accion` y un único listener delegado en `conectarUI()`.
 - `localStorage`:
   - `victoriamap:cambios:v1` → `{ "<id>": "asfalto" | "tierra" }`, solo los tramos que difieren de los datos publicados.
-  - `victoriamap:prefs:v1` → `{ visibles, fondo, nombres }`.
+  - `victoriamap:prefs:v1` → `{ visibles, fondo, soloVerificadas }` (los nombres ya no se guardan: siempre se ven).
   - Todo acceso va en `try/catch` (`leerJSON` / `escribirJSON`): la app tiene que andar sin almacenamiento.
 - Colores: `PALETAS` en `app.js` y las variables `--c-asfalto`, `--c-tierra`, `--c-sinclasificar` y `--c-sel`
   en CSS (`aplicarFondo` las sincroniza). Si cambiás un color, cambialo en `PALETAS`.
-- `tests/e2e.mjs` usa nombres de nivel superior de `app.js` (`estado`, `map`, `grupos`, `encuadrar`, `anchoCalle`,
-  `limpiarSeleccion`, `cuadrasDeLaCalle`).
-  Si los renombrás, actualizá la prueba.
 
 ## Convenciones
 
@@ -166,13 +214,15 @@ En la interfaz se habla de **calles** y **cuadras**, nunca de "tramos" ni de ids
 - Números con `Intl.NumberFormat('es-AR')` (`1.112`, `137,1 km`).
 - Todo texto que se interpole en `innerHTML` pasa por `esc()` (los nombres de calle vienen de OSM).
 - Respetá el estilo del archivo que edites (2 espacios; comillas simples en `public/app.js`, dobles en `scripts/`).
-- Nada de librerías nuevas para cosas que se resuelven con el DOM o con Leaflet.
+- Nada de librerías nuevas para cosas que se resuelven con el DOM o con Leaflet. Excepción pedida por el dueño:
+  **Bootstrap Icons 1.11.3** (CDN jsDelivr con SRI) para los íconos, en las dos páginas (`<i class="bi bi-…">`).
+- Colores oscuros: siempre con `:root[data-tema="oscuro"]` / `[data-tema="oscuro"] …`, nunca con
+  `@media (prefers-color-scheme: dark)` directo (rompería la elección manual del tema).
 
 ## Comandos
 
 ```bash
 npm run dev            # http://127.0.0.1:5173  ← acá se audita todo antes de publicar
-npm test               # prueba E2E (necesita Chrome o Edge; CHROME_PATH si no lo encuentra)
 npm run nombres        # recalcula `nombre` en public/data/ (seguro: no pisa cambios)
 npm run sin-clasificar # recalcula las cuadras sin clasificar a partir de las capas actuales (seguro)
 npm run osm            # vuelve a bajar las calles de OSM (red); después: sin-clasificar y nombres
@@ -201,15 +251,12 @@ npm run data           # regenera TODO public/data/ desde dataset/ — ver adver
   (la numeración tiene que depender solo del interruptor).
 - **Satélite**: Esri World Imagery, con imagen hasta zoom 18 en Victoria (por eso `ZOOM_MAX`).
 - Los nombres y calles de OSM son © colaboradores de OpenStreetMap (ODbL) y el fondo es de Esri: **los créditos no se
-  pueden sacar**. Están plegados en una "i" abajo a la derecha (clase `plegada`, se despliegan al tocarla); el
-  prefijo "Leaflet" sí se sacó (`setPrefix(false)`), porque su licencia no lo exige.
+  pueden sacar**. Están en una línea al pie del panel (`#creditos-mapa`, `actualizarCreditos()` con la atribución del
+  fondo elegido); el control de atribución de Leaflet está desactivado (`attributionControl: false`).
 - Las URLs de cada deploy (`victoriamap-xxxx-….vercel.app`) piden login de Vercel. La pública es `victoriamap.vercel.app`.
 
 ## Antes de dar un cambio por terminado
 
-1. `npm test` pasa (si agregás funcionalidad, agregá su verificación en `tests/e2e.mjs`).
-2. Probalo a ancho de celular (≤ 720 px): sin scroll horizontal y con el panel usable.
-3. Si cambia el comportamiento, actualizá este archivo, `README.md` y la bitácora en `docs/`.
-4. Dejalo corriendo en `npm run dev` para que lo audite el dueño. No publiques.
-
-La prueba E2E entra con `?editar` para probar mover/pintar, y al final verifica el expositor (sin `?editar`).
+1. Probalo a mano en `npm run dev`, en compu y a ancho de celular (≤ 720 px): sin scroll horizontal y con el panel usable.
+2. Si cambia el comportamiento, actualizá este archivo, `README.md` y la bitácora en `docs/`.
+3. Dejalo corriendo en `npm run dev` para que lo audite el dueño. No publiques.

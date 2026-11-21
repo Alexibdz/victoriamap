@@ -1,6 +1,6 @@
 // Servidor estático mínimo para public/ (sin dependencias).
 // Uso: node scripts/serve.mjs [puerto]   (por defecto 5173)
-// También lo importa tests/e2e.mjs.
+// URLs limpias como en Vercel (cleanUrls): /mapa sirve mapa.html y /mapa.html redirige a /mapa.
 
 import { createServer } from "node:http";
 import { readFile } from "node:fs/promises";
@@ -21,8 +21,15 @@ const TYPES = {
 export function servir(port = 0) {
   const server = createServer(async (req, res) => {
     try {
-      let path = decodeURIComponent(new URL(req.url, "http://localhost").pathname);
+      const url = new URL(req.url, "http://localhost");
+      let path = decodeURIComponent(url.pathname);
+      if (path.endsWith(".html")) {
+        const limpia = path.replace(/(index)?\.html$/, "");
+        res.writeHead(308, { Location: limpia + url.search }).end();
+        return;
+      }
       if (path.endsWith("/")) path += "index.html";
+      else if (!extname(path)) path += ".html";
       const file = normalize(join(ROOT, path));
       if (file !== ROOT && !file.startsWith(ROOT + sep)) {
         res.writeHead(403).end();

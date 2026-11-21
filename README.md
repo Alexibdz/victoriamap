@@ -4,7 +4,7 @@
     y la bitácora en docs/ (por qué se tomó cada decisión).
   - No cambies las restricciones (sitio estático, sin base de datos, sin frameworks) sin que lo pida el dueño.
   - No publiques (vercel --prod) ni hagas push por tu cuenta: el dueño revisa en localhost (npm run dev).
-  - Corré `npm test` antes de dar un cambio por terminado.
+  - No hay pruebas automáticas (el dueño las pidió fuera): se revisa a mano en `npm run dev`.
   - OBLIGATORIO: documentá cada cambio y cada decisión en los .md (bitácora en docs/ e instrucciones),
     para que el dueño, cuando retome el proyecto, pueda ver qué se hizo y por qué.
 -->
@@ -20,7 +20,7 @@ Es un sitio estático: no hay base de datos ni backend.
 
 Proyecto realizado con ayuda de inteligencia artificial.
 
-- **Trabajo colaborativo**: alumnos Gabriel Benitez y Alexis Artaza.
+- **Trabajo colaborativo**: alumnos ISGB Gabriel Benitez y Alexis Artaza (créditos en la portada).
 - **Relevamiento de las calles** (asfalto y tierra): estudiantes de la Escuela de Educación Técnica N° 1
   "Dr. Pedro Radio" de Victoria.
 - **Montaje web**: estudiantes del Instituto de Educación Superior "Gaspar Benavento" de Victoria.
@@ -29,6 +29,9 @@ Proyecto realizado con ayuda de inteligencia artificial.
 
 ## Qué hace
 
+- **Portada** (`index.html`): presenta el proyecto, las cifras y el trabajo colaborativo, con el botón
+  "Ver el mapa". El mapa está en `mapa.html`, que se abre como **`/mapa`** (URLs limpias: `cleanUrls` en Vercel y lo mismo en `npm run dev`).
+- Tema claro u oscuro según el dispositivo, con opción de elegirlo a mano.
 - Muestra u oculta la capa de asfalto y la de tierra.
 - Cuenta las calles de cada capa (y también cuadras y kilómetros, con desglose verificada / satelital).
 - Buscador de calle y altura ("Laprida 450"): ubica la dirección y dice si la cuadra es de asfalto o de tierra.
@@ -36,8 +39,8 @@ Proyecto realizado con ayuda de inteligencia artificial.
 - En modo edición (`?editar` en la URL) se pueden seleccionar calles y pasarlas a la otra capa.
   Con `Shift` + clic, o con el interruptor **Varias**, se seleccionan varias a la vez; **Toda la calle**
   selecciona todas las cuadras de esa calle.
-- Muestra en gris punteado las calles que existen en OpenStreetMap pero no están en ninguna capa
-  (**Sin clasificar**); en modo edición se pueden pintar como asfalto o tierra.
+- En modo edición muestra en gris punteado las calles que existen en OpenStreetMap pero no están en ninguna
+  capa (**Sin clasificar**) y permite pintarlas como asfalto o tierra.
 - Escribe el nombre de cada calle sobre la calle pintada.
 - Fondo gris, a color o satelital.
 - Panel resumido con detalles técnicos desplegables y fecha visible de actualización de los datos.
@@ -57,6 +60,7 @@ y volver a publicar.
   precauciones. GitHub Copilot lo carga solo; Claude Code lo lee a través de `CLAUDE.md`.
 - [`docs/sesion-2026-11-16.md`](docs/sesion-2026-11-16.md): cómo se armó la primera versión, decisiones y pendientes.
 - [`docs/sesion-2026-11-20.md`](docs/sesion-2026-11-20.md): mejoras de claridad, búsqueda, compartir y móvil.
+- [`docs/sesion-2026-11-21.md`](docs/sesion-2026-11-21.md): portada (landing) y mapa movido a `mapa.html`.
 
 ## Estructura
 
@@ -68,7 +72,6 @@ scripts/osm-calles.mjs       descarga las calles de OSM (Overpass)
 scripts/sin-clasificar.mjs   calcula las cuadras de OSM que no están en ninguna capa
 scripts/nombres.mjs          agrega el nombre de la calle a cada tramo
 scripts/serve.mjs            servidor local sin dependencias
-tests/e2e.mjs                prueba de punta a punta con Chrome/Edge headless
 public/                      lo que se publica en Vercel
   index.html, styles.css, app.js
   data/asfalto.geojson       capa de asfalto (cada tramo con id, nombre, zona y fuente)
@@ -82,7 +85,6 @@ Requiere Node 22 o superior. No hay dependencias que instalar.
 
 ```bash
 npm run dev            # sirve public/ en http://127.0.0.1:5173
-npm test               # prueba E2E; necesita Chrome o Edge (si no lo encuentra: CHROME_PATH=/ruta/al/navegador)
 npm run nombres        # recalcula los nombres de calle (no pisa cambios)
 npm run sin-clasificar # recalcula las cuadras sin clasificar (no pisa cambios)
 npm run osm            # vuelve a bajar las calles de OpenStreetMap (necesita internet)
@@ -110,7 +112,7 @@ Nombres y calles faltantes: © colaboradores de [OpenStreetMap](https://www.open
 2. Descargar `asfalto.geojson` y `tierra.geojson` desde el panel.
 3. Reemplazar `public/data/asfalto.geojson` y `public/data/tierra.geojson` por los descargados.
 4. `npm run sin-clasificar && npm run nombres` (opcional: limpia de sin clasificar lo que ya se pintó).
-5. `npm test`, revisar en `npm run dev` y después `vercel --prod`.
+5. Revisar en `npm run dev` y después `vercel --prod`.
 
 No corras `npm run data` después de ese reemplazo: regeneraría las capas desde `dataset/`
 y se perderían los cambios.

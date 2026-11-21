@@ -3,175 +3,83 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-  <title>Calles de Victoria</title>
-  <meta name="description" content="Mapa interactivo de las calles de asfalto y de tierra de Victoria, Entre Ríos.">
+  <title>Calles de Victoria · Asfalto y tierra, cuadra por cuadra</title>
+  <meta name="description" content="Mapa interactivo de las calles de asfalto y de tierra de Victoria, Entre Ríos, cuadra por cuadra. Trabajo colaborativo de estudiantes de la E.E.T. N° 1 y del Instituto Superior Gaspar L. Benavento.">
   <meta name="theme-color" content="#172033">
   <link rel="icon" href="favicon.svg" type="image/svg+xml">
-  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
-        integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="">
-  <link rel="stylesheet" href="styles.css">
+  <script>
+    // Los enlaces viejos apuntaban al mapa en la raíz (/?q=..., /?editar): se mandan directo al mapa.
+    if (/[?&](q|editar)(=|&|$)/.test(location.search)) location.replace('mapa' + location.search + location.hash);
+  </script>
+  <script src="tema.js"></script>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css"
+        integrity="sha384-XGjxtQfXaH2tnPFa9x+ruJTuLE3Aa6LhHSWRr1XeTyhezb4abCG4ccI5AkVDxqC+" crossorigin="anonymous">
+  <link rel="stylesheet" href="tema.css">
+  <link rel="stylesheet" href="landing.css">
 </head>
 <body>
-  <div id="map" aria-label="Mapa de calles de Victoria"></div>
+  <div class="menu-flotante tema-menu animar" style="--i: 6">
+    <button type="button" class="menu-boton tema-boton" aria-haspopup="menu" aria-expanded="false" aria-controls="tema-opciones"
+            aria-label="Tema: automático. Cambiar" title="Tema: automático"><i class="bi bi-circle-half" aria-hidden="true"></i></button>
+    <div class="menu-opciones tema-opciones" id="tema-opciones" role="menu" aria-label="Tema de colores" hidden>
+      <button type="button" role="menuitemradio" aria-checked="true" data-tema-opcion="auto"><i class="bi bi-circle-half" aria-hidden="true"></i> Automático</button>
+      <button type="button" role="menuitemradio" aria-checked="false" data-tema-opcion="claro"><i class="bi bi-sun" aria-hidden="true"></i> Claro</button>
+      <button type="button" role="menuitemradio" aria-checked="false" data-tema-opcion="oscuro"><i class="bi bi-moon-stars" aria-hidden="true"></i> Oscuro</button>
+    </div>
+  </div>
 
-  <aside class="panel" id="panel">
-    <header class="panel-cabecera">
-      <div>
-        <p class="eyebrow">Victoria · Entre Ríos <span class="marca-edicion">Modo edición</span></p>
-        <h1>Calles por tipo de calzada</h1>
+  <main class="portada">
+    <section class="hero" aria-labelledby="titulo">
+      <canvas id="trazado" class="trazado" aria-hidden="true"></canvas>
+      <div class="hero-contenido">
+        <p class="eyebrow animar" style="--i: 0">Victoria · Entre Ríos</p>
+        <h1 id="titulo" class="animar" style="--i: 1">Calles de Victoria</h1>
+        <p class="bajada animar" style="--i: 2">Mapa para ver qué calles tienen asfalto y cuáles no.</p>
+        <a class="cta animar" style="--i: 3" href="mapa">
+          Ver el mapa
+          <i class="bi bi-arrow-right" aria-hidden="true"></i>
+        </a>
+        <dl class="cifras animar" style="--i: 4" aria-live="polite">
+          <div><dt>calles</dt><dd id="cifra-calles">—</dd></div>
+          <div><dt>km² de ciudad</dt><dd id="cifra-superficie">12–15</dd></div>
+          <div class="cifra-asfalto"><dt>asfalto</dt><dd id="cifra-asfalto">—</dd></div>
+          <div class="cifra-tierra"><dt>tierra</dt><dd id="cifra-tierra">—</dd></div>
+        </dl>
       </div>
-      <button type="button" class="icono-btn panel-plegar" data-accion="panel"
-              aria-expanded="true" aria-controls="panel-cuerpo" title="Plegar panel">
-        <svg viewBox="0 0 20 20" width="18" height="18" aria-hidden="true"><path d="M5 8l5 5 5-5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
-      </button>
-    </header>
+    </section>
 
-    <div class="panel-cuerpo" id="panel-cuerpo">
-      <div id="alerta" class="alerta" role="alert" hidden></div>
+    <section class="bloques" aria-label="Sobre el proyecto">
+      <article class="bloque animar" style="--i: 5">
+        <h2><i class="bi bi-map" aria-hidden="true"></i> El proyecto</h2>
+        <p>Relevamos las calles de la ciudad para saber cuáles están asfaltadas y cuáles son de tierra.
+          El resultado es un mapa abierto que cualquiera puede consultar tanto desde la web como desde el celular.</p>
+      </article>
 
-      <section aria-labelledby="t-buscar">
-        <h2 id="t-buscar">Buscar</h2>
-        <form id="buscador" class="buscador" role="search" autocomplete="off">
-          <input id="busqueda" type="search" list="calles" placeholder="Calle y altura, p. ej. Laprida 450"
-                 aria-label="Calle y altura" enterkeyhint="search">
-          <button type="button" class="btn btn-limpiar" data-accion="limpiar-busqueda"
-                  aria-label="Limpiar búsqueda" title="Limpiar búsqueda">×</button>
-          <button type="submit" class="btn btn-primario" aria-label="Buscar">
-            <svg viewBox="0 0 20 20" width="16" height="16" aria-hidden="true"><circle cx="9" cy="9" r="5.5" fill="none" stroke="currentColor" stroke-width="2"/><path d="M13.2 13.2L17 17" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
-          </button>
-          <datalist id="calles"></datalist>
-        </form>
-        <div id="resultado" class="tarjeta resultado" aria-live="polite" hidden></div>
-      </section>
+      <article class="bloque animar" style="--i: 6">
+        <h2><i class="bi bi-clipboard-data" aria-hidden="true"></i> Cómo se hizo</h2>
+        <ul class="pasos">
+          <li><strong>Relevamiento:</strong> estudiantes de la E.E.T. N° 1 "Dr. Pedro Radio" relevaron la
+            ciudad por zonas; parte se verificó en las calles y parte con imágenes satelitales.</li>
+          <li><strong>Mapa web:</strong> estudiantes del Instituto Superior "Gaspar L. Benavento" armaron el sitio.</li>
+        </ul>
+      </article>
 
-      <section aria-labelledby="t-capas">
-        <h2 id="t-capas">Capas</h2>
-        <div class="capas">
-          <label class="capa" data-capa="asfalto">
-            <input type="checkbox" role="switch" data-toggle="asfalto" checked>
-            <span class="switch" aria-hidden="true"></span>
-            <span class="capa-info">
-              <span class="capa-nombre"><span class="trazo" aria-hidden="true"></span>Asfalto</span>
-              <span class="capa-detalle" data-largo="asfalto">—</span>
-            </span>
-            <span class="capa-conteo"><span data-conteo="asfalto">—</span><small data-unidad="asfalto">calles</small></span>
-            <details class="detalle-capa" data-detalle="asfalto">
-              <summary>Detalle del relevamiento</summary>
-              <span class="capa-detalle capa-fuentes" data-fuentes="asfalto"></span>
-            </details>
-          </label>
-
-          <label class="capa" data-capa="tierra">
-            <input type="checkbox" role="switch" data-toggle="tierra" checked>
-            <span class="switch" aria-hidden="true"></span>
-            <span class="capa-info">
-              <span class="capa-nombre"><span class="trazo" aria-hidden="true"></span>Tierra</span>
-              <span class="capa-detalle" data-largo="tierra">—</span>
-            </span>
-            <span class="capa-conteo"><span data-conteo="tierra">—</span><small data-unidad="tierra">calles</small></span>
-            <details class="detalle-capa" data-detalle="tierra">
-              <summary>Detalle del relevamiento</summary>
-              <span class="capa-detalle capa-fuentes" data-fuentes="tierra"></span>
-            </details>
-          </label>
-        </div>
-
-        <div class="proporcion" aria-hidden="true">
-          <span data-barra="asfalto" style="--c: var(--c-asfalto)"></span>
-          <span data-barra="tierra" style="--c: var(--c-tierra)"></span>
-        </div>
-        <div class="proporcion-leyenda">
-          <span data-pct="asfalto"></span>
-          <span data-pct="tierra"></span>
-        </div>
-        <p class="total" id="total">Cargando datos…</p>
-
-        <label class="capa capa-pendiente" data-capa="sinclasificar">
-          <input type="checkbox" role="switch" data-toggle="sinclasificar" checked>
-          <span class="switch" aria-hidden="true"></span>
-          <span class="capa-info">
-            <span class="capa-nombre"><span class="trazo trazo-punteado" aria-hidden="true"></span>Sin clasificar</span>
-            <span class="capa-detalle" data-largo="sinclasificar">—</span>
-          </span>
-          <span class="capa-conteo"><span data-conteo="sinclasificar">—</span><small data-unidad="sinclasificar">calles</small></span>
-          <details class="detalle-capa" data-detalle="sinclasificar">
-            <summary>¿Qué significa?</summary>
-            <span class="capa-detalle capa-fuentes">Cuadras que existen en OpenStreetMap pero no se relevaron.</span>
-          </details>
-        </label>
-      </section>
-
-      <section id="seccion-seleccion" aria-labelledby="t-seleccion" hidden>
-        <div class="seccion-cabecera">
-          <h2 id="t-seleccion">Selección</h2>
-          <label class="mini-switch" title="Cada clic suma o quita tramos de la selección">
-            <input type="checkbox" id="multiple"> Varias
-          </label>
-        </div>
-        <div id="seleccion" class="tarjeta" aria-live="polite"></div>
-      </section>
-
-      <section id="seccion-cambios" aria-labelledby="t-cambios" hidden>
-        <h2 id="t-cambios">Cambios</h2>
-        <div id="cambios" class="tarjeta"></div>
-        <div class="descargas">
-          <button type="button" class="btn" data-accion="descargar" data-capa="asfalto">
-            <svg viewBox="0 0 20 20" width="16" height="16" aria-hidden="true"><path d="M10 3v10m0 0l-4-4m4 4l4-4M4 16h12" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
-            asfalto.geojson
-          </button>
-          <button type="button" class="btn" data-accion="descargar" data-capa="tierra">
-            <svg viewBox="0 0 20 20" width="16" height="16" aria-hidden="true"><path d="M10 3v10m0 0l-4-4m4 4l4-4M4 16h12" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
-            tierra.geojson
-          </button>
-        </div>
-      </section>
-
-      <footer class="pie">
-        <div class="leyenda">
-          <span title="Datos verificados en el relevamiento"><svg viewBox="0 0 28 8" width="28" height="8" aria-hidden="true"><line x1="2" y1="4" x2="26" y2="4" stroke="currentColor" stroke-width="3" stroke-linecap="round"/></svg>Continua: verificada</span>
-          <span title="Datos identificados con imágenes satelitales"><svg viewBox="0 0 28 8" width="28" height="8" aria-hidden="true"><line x1="1" y1="4" x2="27" y2="4" stroke="currentColor" stroke-width="3" stroke-dasharray="5 4"/></svg>Punteada: satelital</span>
-        </div>
-        <div class="opciones">
-          <label class="mini-switch">
-            <input type="checkbox" id="nombres" checked> Nombres de calles
-          </label>
-        </div>
-        <div class="fondo">
-          <span>Fondo</span>
-          <div class="segmentado" role="group" aria-label="Mapa de fondo">
-            <button type="button" data-accion="fondo" data-fondo="mapa" aria-pressed="true">Gris</button>
-            <button type="button" data-accion="fondo" data-fondo="color" aria-pressed="false">Color</button>
-            <button type="button" data-accion="fondo" data-fondo="satelite" aria-pressed="false">Satélite</button>
+      <article class="bloque bloque-colaborativo animar" style="--i: 7">
+        <h2><i class="bi bi-people" aria-hidden="true"></i> Trabajo colaborativo</h2>
+        <div class="colaborativo">
+          <div class="logos">
+            <img src="img/logo-gaspar-benavento.jpg" alt="Instituto Superior Gaspar L. Benavento" width="56" height="56">
+            <img src="img/logo-eet1-victoria.png" alt="Escuela de Educación Técnica N° 1 de Victoria, Entre Ríos" width="56" height="56">
           </div>
+          <p><strong>Alumnos ISGB:</strong> Gabriel Benitez y Alexis Artaza.</p>
         </div>
-        <p class="actualizacion" id="actualizacion">Cargando fecha de los datos…</p>
-      </footer>
-    </div>
-    <div class="credito-colaborativo credito-fijo">
-      <div class="credito-texto">
-        <strong>Trabajo colaborativo</strong>
-        <span>Alumnos: Gabriel Benitez y Alexis Artaza</span>
-      </div>
-      <div class="credito-logos">
-        <img src="img/logo-gaspar-benavento.jpg"
-             alt="Instituto Superior Gaspar L. Benavento" width="40" height="40">
-        <img src="img/logo-eet1-victoria.png"
-             alt="Escuela de Educación Técnica N° 1 Victoria E. Ezequiel" width="40" height="40">
-      </div>
-    </div>
-  </aside>
+        <p class="nota">Realizado con ayuda de inteligencia artificial. Nombres de calles:
+          <a href="https://www.openstreetmap.org/copyright">© OpenStreetMap</a>.
+          <a href="https://github.com/Alexibdz/victoriamap">Código abierto</a>.</p>
+      </article>
+    </section>
+  </main>
 
-  <button type="button" class="btn control-ver-todo" data-accion="ver-todo">
-    <svg viewBox="0 0 20 20" width="17" height="17" aria-hidden="true"><path d="M3 8V3h5M12 3h5v5M17 12v5h-5M8 17H3v-5" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
-    Ver toda la ciudad
-  </button>
-
-  <div class="toast" id="toast" role="status" aria-live="polite"></div>
-
-  <noscript><p class="sin-js">Este mapa necesita JavaScript para funcionar.</p></noscript>
-
-  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
-          integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
-  <script src="app.js"></script>
+  <script src="landing.js"></script>
 </body>
 </html>

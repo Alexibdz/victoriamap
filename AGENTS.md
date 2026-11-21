@@ -4,7 +4,7 @@
     y la bitácora en docs/ (por qué se tomó cada decisión).
   - No cambies las restricciones (sitio estático, sin base de datos, sin frameworks) sin que lo pida el dueño.
   - No publiques (vercel --prod) ni hagas push por tu cuenta: el dueño revisa en localhost (npm run dev).
-  - Corré `npm test` antes de dar un cambio por terminado.
+  - No hay pruebas automáticas (el dueño las pidió fuera): se revisa a mano en `npm run dev`.
   - OBLIGATORIO: documentá cada cambio y cada decisión en los .md (bitácora en docs/ e instrucciones),
     para que el dueño, cuando retome el proyecto, pueda ver qué se hizo y por qué.
 -->
@@ -18,6 +18,6 @@ Resumen de lo innegociable:
 
 - Sitio estático (HTML + CSS + JS + Leaflet), sin base de datos, sin backend, sin frameworks ni dependencias.
 - No publicar en Vercel ni hacer push sin pedido explícito del dueño: se entrega funcionando en `npm run dev`.
-- `npm test` tiene que pasar.
+- No hay pruebas automáticas (el dueño las pidió fuera): revisá a mano en `npm run dev`.
 - **Documentar cada cambio y cada decisión** en la bitácora de `docs/` y, si cambia algo de fondo, en
   `.github/copilot-instructions.md` y `README.md`. Y pedirle lo mismo a cualquier otro agente que trabaje acá.

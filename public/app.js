@@ -22,24 +22,40 @@ const CLAVE_PREFS = 'victoriamap:prefs:v1';
 // Expositor: por defecto solo se mira y se busca. Con ?editar en la URL aparecen la selección de calles,
 // mover/pintar, deshacer y descargas.
 const EDICION = new URLSearchParams(window.location.search).has('editar');
-const VISTA_INICIAL = { centro: [-32.62, -60.155], zoom: 15 };
+const VISTA_INICIAL = { centro: [-32.62, -60.155] }; // el zoom inicial es zoomMinimo()
 const ANCHO_CALLE_M = 10;    // ancho con el que se "pinta" la calle; a zoom alto cubre la calzada del mapa
-const ZOOM_MIN = 15;         // escala ~300 m: no se puede alejar más
-const ZOOM_ETIQUETAS = 15;   // desde este zoom se escriben los nombres de las calles
+// Zoom más alejado permitido (y vista inicial): en compu escala ~300 m (15); en celular ~500 m (14),
+// para ver la ciudad entera en una pantalla angosta. Celular = el mismo corte que el CSS (≤ 720 px).
+const esCelular = () => window.innerWidth <= 720;
+const zoomMinimo = () => (esCelular() ? 14 : 15);
+const ZOOM_MIN = zoomMinimo();
+const zoomEtiquetas = () => zoomMinimo(); // los nombres se ven desde la vista más alejada
 const LIMITE_M = 5000;       // no se puede desplazar el mapa más de 5 km fuera del área de los datos
 const ZOOM_MAX = 18;         // escala ~50 m: más cerca, el satélite de Esri muestra "Map data not yet available"
-const ACTUALIZACION_DATOS = '16 de noviembre de 2026';
+// Fecha de los datos publicados (año, mes, día): mantenerla junto con public/data/. De acá salen
+// "16 de noviembre de 2026" (panel de celular) y "16 nov 2026" (pie del panel de compu).
+const FECHA_DATOS = [2026, 11, 16];
+const MESES = ['enero', 'febrero', 'marzo', 'abril', 'mayo', 'junio', 'julio', 'agosto', 'septiembre', 'octubre', 'noviembre', 'diciembre'];
+const ACTUALIZACION_DATOS = `${FECHA_DATOS[2]} de ${MESES[FECHA_DATOS[1] - 1]} de ${FECHA_DATOS[0]}`;
+const ACTUALIZACION_CORTA = `${FECHA_DATOS[2]} ${MESES[FECHA_DATOS[1] - 1].slice(0, 3)} ${FECHA_DATOS[0]}`;
+// Panel de compu (≥ 1024 px): una sola fila con título, buscador, barra-filtro y Verificadas, más un pie.
+const esEscritorio = window.matchMedia('(min-width: 1024px)');
 
 const PALETAS = {
   mapa: { asfalto: '#3b5bdb', tierra: '#e8590c', sinclasificar: '#495057', sel: '#d6336c' },
   color: { asfalto: '#3b5bdb', tierra: '#e8590c', sinclasificar: '#495057', sel: '#d6336c' },
+  // Fondo "Gris" con tema oscuro (fondo gris oscuro de Esri): colores más claros para que contrasten.
+  oscuro: { asfalto: '#748ffc', tierra: '#ff922b', sinclasificar: '#ced4da', sel: '#f06595' },
   satelite: { asfalto: '#74c0fc', tierra: '#ffa94d', sinclasificar: '#f1f3f5', sel: '#f06595' },
 };
+
+const temaOscuro = () => document.documentElement.dataset.tema === 'oscuro'; // lo pone tema.js
 
 const FONDOS = {
   // Fondo gris sin textos ni números de casa: los nombres los escribe la app (ver actualizarEtiquetas).
   // Esri lo sirve hasta zoom 16; más cerca se agranda, y al ser gris liso no molesta.
-  mapa: () => L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Light_Gray_Base/MapServer/tile/{z}/{y}/{x}', {
+  // Con tema oscuro se usa la versión gris oscura del mismo fondo.
+  mapa: () => L.tileLayer(`https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/${temaOscuro() ? 'World_Dark_Gray_Base' : 'World_Light_Gray_Base'}/MapServer/tile/{z}/{y}/{x}`, {
     maxZoom: ZOOM_MAX,
     maxNativeZoom: 16,
     attribution: 'Mapa base &copy; Esri, HERE, Garmin',
@@ -64,7 +80,8 @@ const estado = {
   seleccion: new Set(),
   historial: [],       // pila para deshacer: cada entrada es [[id, capaAnterior], ...]
   multiple: false,
-  nombres: true,
+  nombres: true,         // los nombres de calle siempre se muestran (ya no hay interruptor)
+  soloVerificadas: false, // filtro "Solo calles verificadas": oculta las cuadras satelitales
   fondo: 'mapa',
   busqueda: '',
 };
@@ -140,19 +157,44 @@ function distSegmentos(a, b, c, d) {
 /* ---------- Mapa ---------- */
 const map = L.map('map', {
   zoomControl: false, boxZoom: false, minZoom: ZOOM_MIN, maxZoom: ZOOM_MAX, maxBoundsViscosity: 1,
+  attributionControl: false, // los créditos van dentro del panel (actualizarCreditos), no en una "i" sobre el mapa
+  // Zoom suave: con la rueda o el pellizco se avanza de a cuartos de nivel y más despacio.
+  zoomSnap: 0.25,
+  wheelPxPerZoomLevel: 120,
 })
-  .setView(VISTA_INICIAL.centro, VISTA_INICIAL.zoom);
-L.control.zoom({ position: 'topright', zoomInTitle: 'Acercar', zoomOutTitle: 'Alejar' }).addTo(map);
-L.control.scale({ position: 'bottomright', imperial: false }).addTo(map);
-map.attributionControl.addAttribution('Calles y nombres &copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>');
-// Créditos plegados en una "i" (las licencias de OSM y Esri piden mostrarlos; Leaflet no).
-map.attributionControl.setPrefix(false);
-const creditos = map.attributionControl.getContainer();
-creditos.classList.add('plegada');
-Object.assign(creditos, { tabIndex: 0, title: 'Fuentes del mapa' });
-creditos.setAttribute('role', 'button');
-creditos.addEventListener('click', () => creditos.classList.toggle('plegada'));
-creditos.addEventListener('keydown', (e) => e.key === 'Enter' && creditos.classList.toggle('plegada'));
+  .setView(VISTA_INICIAL.centro, ZOOM_MIN);
+
+// Botones + y −: en vez del salto de un nivel, un vuelo corto hasta el zoom siguiente (salvo "reducir movimiento").
+// Se reemplazan antes de agregar el control, porque Leaflet engancha los clics al agregarlo.
+const controlZoom = L.control.zoom({ position: 'topright', zoomInTitle: 'Acercar', zoomOutTitle: 'Alejar' });
+const zoomSuave = (delta) => {
+  const destino = Math.min(map.getMaxZoom(), Math.max(map.getMinZoom(), Math.round(map.getZoom() + delta)));
+  if (destino === map.getZoom()) return;
+  if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) map.setZoom(destino);
+  else map.flyTo(map.getCenter(), destino, { duration: 0.45, easeLinearity: 0.2 });
+};
+controlZoom._zoomIn = () => zoomSuave(1);
+controlZoom._zoomOut = () => zoomSuave(-1);
+controlZoom.addTo(map);
+// Escala: debajo del botón de centrar el mapa (styles.css, .escala-flotante), no en una esquina de Leaflet.
+const controlEscala = L.control.scale({ position: 'topright', imperial: false }).addTo(map);
+controlEscala.getContainer().classList.add('escala-flotante');
+map.getContainer().append(controlEscala.getContainer());
+
+/* Créditos del mapa: las licencias de OpenStreetMap (calles y nombres) y de Esri (fondos) piden mostrarlos.
+   Van en una línea chica dentro del panel, siempre visible, y cambian con el fondo elegido. */
+const CREDITO_OSM = 'Calles y nombres &copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>';
+function actualizarCreditos() {
+  const fondo = capaFondo?.getAttribution?.() ?? '';
+  const linea = document.querySelector('#creditos-mapa');
+  if (linea) linea.innerHTML = [CREDITO_OSM, fondo].filter(Boolean).join(' · '); // textos fijos nuestros, no de usuarios
+  // Pie del panel de compu, más corto: "© OpenStreetMap · Esri, HERE, Garmin"
+  const pie = document.querySelector('[data-creditos]');
+  if (pie) {
+    pie.innerHTML = ['&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>',
+      fondo.replace(/^.*?&copy;\s*/, '')].filter(Boolean).join(' · ');
+  }
+}
 
 // Panes: halos de selección debajo de las calles; nombres por encima de todo.
 map.createPane('halos').style.zIndex = 390;
@@ -167,7 +209,7 @@ const conHover = window.matchMedia('(hover: hover)').matches;
 let capaFondo = null;
 let idsDibujados = new Set();
 
-const paleta = () => PALETAS[estado.fondo] ?? PALETAS.mapa;
+const paleta = () => (estado.fondo === 'mapa' && temaOscuro() ? PALETAS.oscuro : PALETAS[estado.fondo] ?? PALETAS.mapa);
 
 /** Ancho en píxeles de una calle de ANCHO_CALLE_M metros al zoom actual (mínimo 3 px para la vista general). */
 function anchoCalle() {
@@ -269,7 +311,7 @@ let corridas = [];
 function calcularCorridas() {
   const porNombre = new Map();
   for (const t of estado.tramos.values()) {
-    if (!t.props.nombre || !estado.visibles[t.capa]) continue;
+    if (!t.props.nombre || !seVe(t)) continue;
     const ll = t.layer.getLatLngs();
     const pts = L.LineUtil.isFlat(ll) ? ll : ll.flat();
     const a = [pts[0].lng * KX, pts[0].lat * KY];
@@ -314,7 +356,7 @@ function calcularCorridas() {
  */
 function actualizarEtiquetas() {
   etiquetas.clearLayers();
-  if (!estado.nombres || map.getZoom() < ZOOM_ETIQUETAS) return;
+  if (!estado.nombres || map.getZoom() < zoomEtiquetas()) return;
 
   const z = map.getZoom();
   const tam = z >= 18 ? 13 : z >= 16 ? 12 : 11;
@@ -520,8 +562,12 @@ function resaltarCalle(cuadras) {
 }
 
 function mostrarResultado(html) {
-  $('#resultado').innerHTML = html;
-  $('#resultado').hidden = false;
+  const caja = $('#resultado');
+  caja.innerHTML = html;
+  caja.hidden = false;
+  caja.classList.remove('aparecer'); // se reinicia la animación en cada búsqueda
+  void caja.offsetWidth;
+  caja.classList.add('aparecer');
 }
 
 function accionesBusqueda() {
@@ -577,7 +623,9 @@ async function buscar(texto) {
     keyboard: false,
     icon: L.divIcon({ className: 'pin', iconSize: [0, 0], html: '<span class="pin-punto"></span>' }),
   }));
-  map.setView(ubicacion.latlng, Math.max(map.getZoom(), 17));
+  const zoomDireccion = Math.max(map.getZoom(), 17);
+  if (movimientoReducido()) map.setView(ubicacion.latlng, zoomDireccion);
+  else map.flyTo(ubicacion.latlng, zoomDireccion, { duration: 1 });
   mostrarResultado(`<div class="sel-cabecera"><strong>${esc(calle)} ${fmtEntero.format(numero)}</strong>
       ${cuadra ? chip(cuadra.capa) : ''}</div>
     ${cuadra ? `<p class="nota">${cuadra.capa === SIN ? 'Esta cuadra no fue relevada.' : `Cuadra de ${NOMBRE[cuadra.capa].toLowerCase()}`}${cuadra.props.fuente === 'satelital' ? ' (según imagen satelital)' : ''}.</p>` : ''}
@@ -585,13 +633,30 @@ async function buscar(texto) {
     ${accionesBusqueda()}`);
 }
 
+/**
+ * Sugerencias del buscador: recién desde la 2.ª letra, hasta 8 calles; primero las que empiezan con lo escrito.
+ * (Antes la lista traía todas las calles apenas se tocaba el campo.)
+ */
+function sugerirCalles(texto) {
+  const buscado = normalizar(interpretarBusqueda(texto).texto);
+  if (buscado.length < 2) {
+    $('#calles').innerHTML = '';
+    return;
+  }
+  const nombres = nombresDeCalles();
+  const empiezan = nombres.filter((n) => normalizar(n).startsWith(buscado));
+  const contienen = nombres.filter((n) => !empiezan.includes(n) && normalizar(n).includes(buscado));
+  $('#calles').innerHTML = [...empiezan, ...contienen].slice(0, 8).map((n) => `<option value="${esc(n)}">`).join('');
+}
+
 function prepararBuscador() {
-  $('#calles').innerHTML = nombresDeCalles().map((n) => `<option value="${esc(n)}">`).join('');
+  $('#calles').innerHTML = '';
   $('#buscador').addEventListener('submit', (e) => {
     e.preventDefault();
     buscar($('#busqueda').value);
   });
   $('#busqueda').addEventListener('input', (e) => {
+    sugerirCalles(e.target.value);
     if (!e.target.value.trim()) limpiarBusqueda();
   });
 }
@@ -616,20 +681,35 @@ async function compartirBusqueda() {
   }
 }
 
-function verTodaLaCiudad() {
-  encuadrar([...estado.tramos.values()].filter((t) => t.capa !== SIN), { maxZoom: ZOOM_MIN });
+function verTodaLaCiudad(animar = true) {
+  // En compu la ciudad se centra en toda la pantalla (sin correrse para esquivar el panel).
+  encuadrar([...estado.tramos.values()].filter((t) => t.capa !== SIN), { maxZoom: zoomMinimo(), animate: animar, centrado: true });
 }
 
-function relleno() {
+/**
+ * Márgenes para encuadrar. Compu: el panel es un dock abajo al centro; con `centrado` (vista de toda la ciudad)
+ * se centra en toda la pantalla, y si no, se deja libre la franja del dock. Celular: por encima del panel.
+ */
+function relleno(centrado = false) {
   const r = $('#panel').getBoundingClientRect();
-  if (window.innerWidth > 720) return { paddingTopLeft: [r.right + 24, 24], paddingBottomRight: [24, 24] };
+  if (window.innerWidth > 720) {
+    if (centrado) return { paddingTopLeft: [24, 24], paddingBottomRight: [24, 24] };
+    return { paddingTopLeft: [24, 24], paddingBottomRight: [24, Math.max(24, window.innerHeight - r.top + 16)] };
+  }
   return { paddingTopLeft: [16, 16], paddingBottomRight: [16, Math.max(16, window.innerHeight - r.top + 16)] };
 }
 
+const movimientoReducido = () => window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+/** Encuadra las cuadras. Por defecto vuela hasta ellas; con { animate: false } (o "reducir movimiento") salta. */
 function encuadrar(tramos, opciones = {}) {
   const limites = L.latLngBounds([]);
   for (const t of tramos) limites.extend(t.layer.getBounds());
-  if (limites.isValid()) map.fitBounds(limites, { ...relleno(), ...opciones });
+  if (!limites.isValid()) return;
+  const { centrado = false, ...resto } = opciones;
+  opciones = resto;
+  if (opciones.animate === false || movimientoReducido()) map.fitBounds(limites, { ...relleno(centrado), ...opciones, animate: false });
+  else map.flyToBounds(limites, { ...relleno(centrado), duration: 0.9, ...opciones });
 }
 
 /* ---------- Acciones ---------- */
@@ -655,12 +735,41 @@ function limpiarSeleccion() {
   renderSeleccion();
 }
 
+/** ¿El filtro "Solo calles verificadas" esconde este tramo? */
+const filtrado = (t) => estado.soloVerificadas && t.props.fuente === 'satelital';
+/** ¿El tramo se ve en el mapa? (capa visible y no filtrado) */
+const seVe = (t) => estado.visibles[t.capa] && !filtrado(t);
+
 function asignarCapa(t, capa) {
   grupos[t.capa].removeLayer(t.layer);
   t.capa = capa;
   t.layer.setStyle(estilo(t));
-  grupos[capa].addLayer(t.layer);
-  if (!estado.visibles[capa]) estado.seleccion.delete(t.id);
+  if (!filtrado(t)) grupos[capa].addLayer(t.layer);
+  if (!seVe(t)) estado.seleccion.delete(t.id);
+}
+
+/** Muestra solo las cuadras verificadas (oculta las satelitales del mapa, los conteos y los nombres). */
+function setSoloVerificadas(activo, guardar = true) {
+  estado.soloVerificadas = activo;
+  for (const boton of document.querySelectorAll('[data-verificadas]')) { // chip (celular) y botón del panel de compu
+    boton.setAttribute('aria-pressed', String(activo));
+    const icono = boton.querySelector('.bi');
+    if (icono) icono.className = `bi ${activo ? 'bi-check-lg' : 'bi-circle'}`; // ✓ prendido, ○ apagado
+    const texto = boton.querySelector('.verif-icono');
+    if (texto) texto.textContent = activo ? '✓' : '○';
+  }
+  for (const t of estado.tramos.values()) {
+    if (t.props.fuente !== 'satelital') continue;
+    if (activo) {
+      grupos[t.capa].removeLayer(t.layer);
+      estado.seleccion.delete(t.id);
+    } else {
+      grupos[t.capa].addLayer(t.layer);
+    }
+  }
+  dibujarSeleccion();
+  if (guardar) guardarPrefs();
+  render();
 }
 
 function mover(ids, destino) {
@@ -750,7 +859,9 @@ function aplicarFondo(nombre) {
   if (capaFondo) map.removeLayer(capaFondo);
   capaFondo = FONDOS[nombre]().addTo(map);
   estado.fondo = nombre;
-  map.getContainer().classList.toggle('fondo-satelite', nombre === 'satelite');
+  actualizarCreditos();
+  // Fondo oscuro (satélite, o gris con tema oscuro): nombres en blanco con halo oscuro.
+  map.getContainer().classList.toggle('fondo-oscuro', nombre === 'satelite' || (nombre === 'mapa' && temaOscuro()));
 
   const pal = paleta();
   const raiz = document.documentElement.style;
@@ -759,16 +870,9 @@ function aplicarFondo(nombre) {
   for (const capa of CAPAS) raiz.setProperty(`--c-${capa}`, pal[capa]);
   raiz.setProperty('--c-sel', pal.sel);
   document.querySelectorAll('[data-accion="fondo"]').forEach((b) => {
-    b.setAttribute('aria-pressed', String(b.dataset.fondo === nombre));
+    b.setAttribute('aria-checked', String(b.dataset.fondo === nombre)); // opciones del menú de fondo
   });
   restilizarTodo();
-}
-
-function setNombres(visible) {
-  estado.nombres = visible;
-  $('#nombres').checked = visible;
-  actualizarEtiquetas();
-  guardarPrefs();
 }
 
 function descargar(capa) {
@@ -794,7 +898,7 @@ function guardarCambios() {
 }
 
 function guardarPrefs() {
-  escribirJSON(CLAVE_PREFS, { visibles: estado.visibles, fondo: estado.fondo, nombres: estado.nombres });
+  escribirJSON(CLAVE_PREFS, { visibles: estado.visibles, fondo: estado.fondo, soloVerificadas: estado.soloVerificadas });
 }
 
 function aplicarCambiosGuardados() {
@@ -853,6 +957,7 @@ function resumen() {
   const r = {};
   for (const capa of TODAS) r[capa] = { calles: new Set(), cuadras: 0, sinNombre: 0, largo: 0, satelital: 0 };
   for (const t of estado.tramos.values()) {
+    if (filtrado(t)) continue; // con "Solo calles verificadas" se cuenta solo lo que se ve
     const x = r[t.capa];
     x.cuadras++;
     x.largo += t.largo;
@@ -866,38 +971,55 @@ function resumen() {
 const chip = (capa, n) =>
   `<span class="chip" style="--c: var(--c-${capa})">${n != null ? `${fmtEntero.format(n)} ` : ''}${NOMBRE[capa]}</span>`;
 
+/** Cambia un número del panel y, si cambió de verdad, le da un pequeño salto. */
+function cambiarNumero(elemento, texto) {
+  if (elemento.textContent === texto) return;
+  const habiaValor = elemento.textContent !== '—';
+  elemento.textContent = texto;
+  if (!habiaValor) return;
+  elemento.classList.remove('latir');
+  void elemento.offsetWidth;
+  elemento.classList.add('latir');
+}
+
 function renderCapas() {
   const r = resumen();
-  for (const capa of TODAS) {
-    const x = r[capa];
-    $(`[data-conteo="${capa}"]`).textContent = fmtEntero.format(x.calles.size);
-    $(`[data-unidad="${capa}"]`).textContent = x.calles.size === 1 ? 'calle' : 'calles';
-    $(`[data-largo="${capa}"]`).textContent = `${fmtKm(x.largo)} · ${plural(x.cuadras, 'cuadra', 'cuadras')}`;
-    $(`.capa[data-capa="${capa}"]`).classList.toggle('oculta', !estado.visibles[capa]);
-    $(`[data-toggle="${capa}"]`).checked = estado.visibles[capa];
+  for (const capa of CAPAS) {
+    // Chip de la capa: número de calles y si está prendida (lo que muestra el mapa).
+    cambiarNumero($(`[data-conteo="${capa}"]`), fmtEntero.format(r[capa].calles.size));
+    $(`[data-chip="${capa}"]`).setAttribute('aria-pressed', String(estado.visibles[capa]));
+    // En la barra, la parte de una capa apagada queda tenue (celular) o gris (compu, donde es un botón).
+    const barra = $(`[data-barra="${capa}"]`);
+    barra.classList.toggle('apagada', !estado.visibles[capa]);
+    barra.setAttribute('aria-pressed', String(estado.visibles[capa]));
   }
+  cambiarNumero($('[data-conteo-barra="asfalto"]'), fmtEntero.format(r.asfalto.calles.size));
+  const todas = new Set(CAPAS.flatMap((capa) => [...r[capa].calles])); // una calle con los dos tipos cuenta una vez
+  cambiarNumero($('[data-total-calles]'), fmtEntero.format(todas.size));
 
-  const calles = new Set();
-  const mixtas = [...r.asfalto.calles].filter((n) => r.tierra.calles.has(n)).length;
-  let largo = 0;
-  let sinNombre = 0;
-  for (const capa of CAPAS) {
-    const x = r[capa];
-    x.calles.forEach((n) => calles.add(n));
-    largo += x.largo;
-    sinNombre += x.sinNombre;
-    $(`[data-fuentes="${capa}"]`).textContent =
-      `${fmtEntero.format(x.cuadras - x.satelital)} cuadras verificadas · ${fmtEntero.format(x.satelital)} satelitales`;
-  }
-  // La proporción va por kilómetros: una calle puede tener cuadras de los dos tipos.
-  for (const capa of CAPAS) {
-    const pct = largo ? (r[capa].largo / largo) * 100 : 0;
-    $(`[data-barra="${capa}"]`).style.flexBasis = `${pct}%`;
-    $(`[data-pct="${capa}"]`).textContent = `${fmtDecimal.format(pct)} % ${capa}`;
-  }
-  $('#total').textContent = `${plural(calles.size, 'calle', 'calles')} · ${fmtKm(largo)}`
-    + (mixtas ? ` · ${plural(mixtas, 'tiene', 'tienen')} asfalto y tierra` : '')
-    + (sinNombre ? ` · ${plural(sinNombre, 'cuadra', 'cuadras')} sin nombre` : '');
+  // La proporción va por kilómetros (una calle puede tener cuadras de los dos tipos). Se muestran enteros que suman 100.
+  // El ancho de cada parte de la barra sale de --pct (en compu, flex-grow; en celular, porcentaje del ancho).
+  const largo = CAPAS.reduce((suma, capa) => suma + r[capa].largo, 0);
+  const pctAsfalto = largo ? (r.asfalto.largo / largo) * 100 : 0;
+  $('[data-barra="asfalto"]').style.setProperty('--pct', pctAsfalto);
+  $('[data-barra="tierra"]').style.setProperty('--pct', largo ? 100 - pctAsfalto : 0);
+  const enteroAsfalto = Math.round(pctAsfalto);
+  const enteroTierra = largo ? 100 - enteroAsfalto : 0;
+  $('[data-pct="asfalto"]').innerHTML = `<strong>${enteroAsfalto} %</strong> asfaltado`;
+  $('[data-pct="tierra"]').innerHTML = `<strong>${enteroTierra} %</strong> de tierra`;
+  $('[data-pct-barra="asfalto"]').textContent = `${enteroAsfalto} %`;
+  $('[data-pct-barra="tierra"]').textContent = `${enteroTierra} %`;
+}
+
+/**
+ * Ajustes que dependen del ancho: en compu (≥ 1024 px) la barra es un filtro con foco de teclado y el
+ * buscador tiene un texto de ejemplo más corto; en celular la barra es solo un gráfico.
+ */
+function ajustarPanelAncho() {
+  const compu = esEscritorio.matches;
+  for (const barra of document.querySelectorAll('[data-barra]')) barra.tabIndex = compu ? 0 : -1;
+  $('.proporcion').setAttribute('aria-hidden', String(!compu));
+  $('#busqueda').placeholder = compu ? 'Calle y altura' : 'Calle y altura, ej. Laprida 450';
 }
 
 function listaNombres(tramos) {
@@ -909,7 +1031,7 @@ function listaNombres(tramos) {
 
 /** Cuadras visibles de la misma calle (mismo nombre), en cualquier capa. */
 const cuadrasDeLaCalle = (nombre) =>
-  [...estado.tramos.values()].filter((t) => t.props.nombre === nombre && estado.visibles[t.capa]);
+  [...estado.tramos.values()].filter((t) => t.props.nombre === nombre && seVe(t));
 
 function seleccionarCalle(nombre) {
   estado.seleccion = new Set(cuadrasDeLaCalle(nombre).map((t) => t.id));
@@ -1025,14 +1147,26 @@ function mostrarError(mensaje) {
   const el = $('#alerta');
   el.textContent = mensaje;
   el.hidden = false;
-  $('#total').textContent = 'Sin datos';
 }
 
-function plegarPanel() {
-  const panel = $('#panel');
-  const plegado = panel.classList.toggle('plegado');
-  $('[data-accion="panel"]').setAttribute('aria-expanded', String(!plegado));
+/** Abre o cierra el bloque expandible del panel (cerrado: encabezado, buscador y chips). */
+/**
+ * Abre o cierra la búsqueda del panel. Cerrado (como arranca): encabezado, chips y gráfico.
+ * Abierto: además el buscador, con el cursor ya en el campo.
+ */
+function abrirBusqueda(abrir = !$('#panel').classList.contains('abierto'), enfocar = true) {
+  $('#panel').classList.toggle('abierto', abrir);
+  const boton = $('[data-accion="panel"]');
+  boton.setAttribute('aria-expanded', String(abrir));
+  boton.setAttribute('aria-label', abrir ? 'Cerrar búsqueda' : 'Abrir búsqueda');
+  boton.title = abrir ? 'Cerrar búsqueda' : 'Abrir búsqueda';
+  boton.querySelector('.bi').className = `bi ${abrir ? 'bi-chevron-down' : 'bi-chevron-up'}`;
+  // En compu el cursor queda en el campo. En celular no: el teclado achicaría la pantalla de golpe;
+  // aparece recién cuando se toca el campo.
+  if (abrir && enfocar && window.matchMedia('(pointer: fine)').matches) $('#busqueda').focus({ preventScroll: true });
 }
+
+const plegarPanel = () => abrirBusqueda();
 
 function conectarUI() {
   document.addEventListener('click', (e) => {
@@ -1057,13 +1191,18 @@ function conectarUI() {
     }
   });
 
-  for (const capa of TODAS) {
-    $(`[data-toggle="${capa}"]`).addEventListener('change', (e) => setVisible(capa, e.target.checked));
+  for (const capa of CAPAS) { // cada chip prende o apaga su capa (sin clasificar no tiene chip)
+    $(`[data-chip="${capa}"]`).addEventListener('click', () => setVisible(capa, !estado.visibles[capa]));
+    $(`[data-barra="${capa}"]`).addEventListener('click', () => setVisible(capa, !estado.visibles[capa])); // compu
   }
   $('#multiple').addEventListener('change', (e) => {
     estado.multiple = e.target.checked;
   });
-  $('#nombres').addEventListener('change', (e) => setNombres(e.target.checked));
+  for (const boton of document.querySelectorAll('[data-verificadas]')) {
+    boton.addEventListener('click', () => setSoloVerificadas(!estado.soloVerificadas));
+  }
+  ajustarPanelAncho();
+  esEscritorio.addEventListener('change', ajustarPanelAncho);
 
   document.addEventListener('keydown', (e) => {
     if (e.key === 'Escape') {
@@ -1081,6 +1220,10 @@ function conectarUI() {
   });
   map.on('zoomend', restilizarTodo);
   map.on('moveend', actualizarEtiquetas);
+  window.addEventListener('cambio-tema', () => {
+    aplicarFondo(estado.fondo); // cambia el fondo gris y los colores de las calles
+    actualizarEtiquetas();
+  });
 
   // En móvil el panel es una hoja inferior: los controles y el aviso se ubican por encima.
   const panel = $('#panel');
@@ -1089,6 +1232,8 @@ function conectarUI() {
     document.documentElement.style.setProperty('--sheet-h', `${alto}px`);
   };
   new ResizeObserver(medirHoja).observe(panel);
+  panel.addEventListener('animationend', medirHoja); // la animación de entrada mueve el panel
+  window.addEventListener('resize', () => map.setMinZoom(zoomMinimo()));
   window.addEventListener('resize', medirHoja);
 }
 
@@ -1096,11 +1241,11 @@ function conectarUI() {
 async function iniciar() {
   const prefs = leerJSON(CLAVE_PREFS, {}) ?? {};
   if (FONDOS[prefs.fondo]) estado.fondo = prefs.fondo;
-  if (typeof prefs.nombres === 'boolean') estado.nombres = prefs.nombres;
-  for (const capa of TODAS) {
+  for (const capa of CAPAS) {
     if (typeof prefs.visibles?.[capa] === 'boolean') estado.visibles[capa] = prefs.visibles[capa];
   }
-  $('#nombres').checked = estado.nombres;
+  // Sin clasificar no tiene tarjeta ni interruptor: se ve solo en modo edición, donde sirve para pintar.
+  estado.visibles[SIN] = EDICION;
   if (EDICION) document.body.classList.add('modo-edicion');
   $('#seccion-seleccion').hidden = !EDICION;
 
@@ -1120,15 +1265,18 @@ async function iniciar() {
   for (const capa of TODAS) {
     if (estado.visibles[capa]) grupos[capa].addTo(map);
   }
+  if (prefs.soloVerificadas === true) setSoloVerificadas(true, false);
   limitarArea();
   prepararBuscador();
-  $('#actualizacion').textContent = `Datos publicados: ${ACTUALIZACION_DATOS}.`;
+  $('#actualizacion').textContent = `Relevamiento realizado hasta el ${ACTUALIZACION_DATOS}`;
+  $('[data-fecha-corta]').textContent = `Relevamiento hasta el ${ACTUALIZACION_CORTA}`;
   const consulta = new URLSearchParams(window.location.search).get('q');
   if (consulta) {
+    abrirBusqueda(true, false); // un enlace con búsqueda abre el panel para mostrar el resultado
     $('#busqueda').value = consulta;
     await buscar(consulta);
   } else {
-    verTodaLaCiudad();
+    verTodaLaCiudad(false); // la primera vista aparece directo, sin vuelo
   }
   render();
 }
